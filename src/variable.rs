@@ -45,6 +45,34 @@ impl<'a> ops::Add<&'a Variable<'a>> for &'a Variable<'a> {
     }
 }
 
+impl<'a> ops::Sub<&'a Variable<'a>> for &'a Variable<'a> {
+    type Output = Variable<'a>;
+
+    fn sub(self, rhs: &'a Variable<'a>) -> Variable<'a> {
+        Variable::new_node(self.data - rhs.data, Some(&self), Some(&rhs))
+    }
+}
+
+impl<'a> ops::Mul<&'a Variable<'a>> for &'a Variable<'a> {
+    type Output = Variable<'a>;
+
+    fn mul(self, rhs: &'a Variable<'a>) -> Variable<'a> {
+        Variable::new_node(self.data * rhs.data, Some(&self), Some(&rhs))
+    }
+}
+
+impl<'a> ops::Div<&'a Variable<'a>> for &'a Variable<'a> {
+    type Output = Variable<'a>;
+
+    fn div(self, rhs: &'a Variable<'a>) -> Variable<'a> {
+        if rhs.data == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        Variable::new_node(self.data / rhs.data, Some(&self), Some(&rhs))
+    }
+}
+
 // ************************ unit tests ******************************
 
 #[cfg(test)]
@@ -57,6 +85,38 @@ mod tests {
         let y = Variable::new(2.0);
 
         assert_eq!(x.data + y.data, (&x + &y).data);
+    }
+
+    #[test]
+    fn sub_check_value() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(2.0);
+
+        assert_eq!(x.data - y.data, (&x - &y).data);
+    }
+
+    #[test]
+    fn mul_check_value() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(2.0);
+
+        assert_eq!(x.data * y.data, (&x * &y).data);
+    }
+
+    #[test]
+    fn div_check_value() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(2.0);
+
+        assert_eq!(x.data / y.data, (&x / &y).data);
+    }
+
+    #[test]
+    #[should_panic]
+    fn div_check_panic_div_zero() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(0.0);
+        let _div = &x / &y;
     }
 
     fn assert_otpional_ref<'a>(optional_ref: Option<&'a Variable<'a>>, ref_var: &'a Variable<'a>) {
