@@ -44,3 +44,35 @@ impl<'a> ops::Add<&'a Variable<'a>> for &'a Variable<'a> {
         Variable::new_node(self.data + rhs.data, Some(&self), Some(&rhs))
     }
 }
+
+// ************************ unit tests ******************************
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_check_value() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(2.0);
+
+        assert_eq!(x.data + y.data, (&x + &y).data);
+    }
+
+    fn assert_otpional_ref<'a>(optional_ref: Option<&'a Variable<'a>>, ref_var: &'a Variable<'a>) {
+        match optional_ref {
+            Some(some_ref_var) => assert_eq!(some_ref_var as *const _, ref_var as *const _),
+            None => (),
+        }
+    }
+
+    #[test]
+    fn new_node_check_root() {
+        let x = Variable::new(2.0);
+        let y = Variable::new(2.0);
+        let node = Variable::new_node(3.0, Some(&x), Some(&y));
+
+        assert_otpional_ref(node.left_root, &x);
+        assert_otpional_ref(node.right_root, &y);
+    }
+}
