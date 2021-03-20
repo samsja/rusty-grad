@@ -1,34 +1,39 @@
 use std::fmt;
 use std::ops;
 
-
 #[derive(Debug)]
-pub struct Variable {
+pub struct Variable<'a> {
     pub data: f32,
-    grad: f32,
-
+    pub grad: f32,
+    left_root: Option<&'a Variable<'a>>,
+    right_root: Option<&'a Variable<'a>>,
 }
 
-impl fmt::Display for Variable {
+impl<'a> fmt::Display for Variable<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, grad : {})", self.data, self.grad)
+        write!(f, "Variable( {} grad : {})", self.data, self.grad)
     }
 }
 
-impl Variable {
-    pub fn new(data: f32) -> Variable {
-        Variable { data, grad: 0.0 }
+impl<'a> Variable<'a> {
+    pub fn new(
+        data: f32,
+        left_root: Option<&'a Variable<'a>>,
+        right_root: Option<&'a Variable<'a>>,
+    ) -> Variable<'a> {
+        Variable {
+            data,
+            grad: 0.0,
+            left_root,
+            right_root,
+        }
     }
 }
 
-impl ops::Add<&Variable> for &Variable {
+impl<'a> ops::Add<&'a Variable<'a>> for &'a Variable<'a> {
+    type Output = Variable<'a>;
 
-  type Output = Variable;
-
-  fn add(self,_rhs: &Variable) -> Variable {
-    
-    Variable::new(self.data + _rhs.data)
-    
-  }
-
+    fn add(self, rhs: &'a Variable<'a>) -> Variable<'a> {
+        Variable::new(self.data + rhs.data, Some(&self), Some(&rhs))
+    }
 }
