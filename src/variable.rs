@@ -16,7 +16,7 @@ impl<'a> fmt::Display for Variable<'a> {
 }
 
 impl<'a> Variable<'a> {
-    pub fn new(
+    pub fn new_node(
         data: f32,
         left_root: Option<&'a Variable<'a>>,
         right_root: Option<&'a Variable<'a>>,
@@ -30,10 +30,17 @@ impl<'a> Variable<'a> {
     }
 }
 
+impl<'a> Variable<'a> {
+    // TODO new should be private
+    pub fn new(data: f32) -> Variable<'a> {
+        Variable::new_node(data, None, None)
+    }
+}
+
 impl<'a> ops::Add<&'a Variable<'a>> for &'a Variable<'a> {
     type Output = Variable<'a>;
 
     fn add(self, rhs: &'a Variable<'a>) -> Variable<'a> {
-        Variable::new(self.data + rhs.data, Some(&self), Some(&rhs))
+        Variable::new_node(self.data + rhs.data, Some(&self), Some(&rhs))
     }
 }
