@@ -3,15 +3,21 @@ mod variable;
 use variable::Variable;
 
 fn main() {
-    let x = Variable::new(1.0);
+    let mut x = Variable::new(1.0);
     println! {"{:}",x};
 
-    let y = Variable::new(3.0);
+    let mut y = Variable::new(3.0);
     println! {"{:}",y};
 
-    let sum = &x + &y;
+    let mut sum = &mut x + &mut y;
     println!("{:?}", sum);
 
-    let z = Variable::new_node(1.0, Some(&sum), None);
-    println! {"{:?}",z};
+    sum.backward();
+
+    for some_var in vec![&mut sum.left_root, &mut sum.right_root].iter_mut() {
+        match some_var {
+            Some(var) => println!("{}", var.grad),
+            None => (),
+        }
+    }
 }
