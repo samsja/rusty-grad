@@ -2,7 +2,7 @@ use rusty_grad::Variable;
 use rusty_grad::VariableRef;
 
 #[test]
-fn test_main() {
+fn test_simple_autograd() {
     let x = VariableRef::new(Variable::new(1.0));
     let y = VariableRef::new(Variable::new(3.0));
 
@@ -10,5 +10,6 @@ fn test_main() {
 
     sum.backward();
 
-    println!("{}", x);
+    assert_eq!(x.borrow().grad, 1.0);
+    assert_eq!(y.borrow().grad, 3.0);
 }
