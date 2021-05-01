@@ -111,25 +111,41 @@ impl Variable {
                     }
                 }
 
-                // Operator::SUB => {
-                //     for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
-                //         match some_var {
-                //             Some(var) => var.grad -= var.data,
-                //             None => (),
-                //         }
-                //     }
-                // }
-                // Operator::MUL => match (&mut self.left_root, &mut self.right_root) {
-                //     (Some(left), Some(right)) => {
-                //         right.grad += left.data;
-                //         left.grad += right.data;
-                //     }
-                //     _ => (),
-                // },
-                // Operator::DIV => {
-                //     unimplemented!();
-                // },
-                _ => (),
+                Operator::SUB => {
+                    for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
+                        match some_var {
+                            Some(var) => {
+                                let data = var.borrow().data;
+                                var.borrow_mut().grad -= data;
+                            }
+                            None => (),
+                        }
+                    }
+                }
+                Operator::MUL => match (&mut self.left_root, &mut self.right_root) {
+                    (Some(left), Some(right)) => {
+                        let mut right_var = right.borrow_mut();
+                        let mut left_var = left.borrow_mut();
+
+                        right_var.grad += right_var.data;
+                        left_var.grad += left_var.data;
+                    }
+                    _ => (),
+                },
+                Operator::DIV => match (&mut self.left_root, &mut self.right_root) {
+                    (Some(left), Some(right)) => {
+                        let mut right_var = right.borrow_mut();
+                        let mut left_var = left.borrow_mut();
+
+                        if left_var.data == 0.0 {
+                            panic!("can't differentiate when divinding by zero");
+                        }
+
+                        right_var.grad += 1.0 / right_var.data;
+                        left_var.grad -= right_var.data / (left_var.data * left_var.data);
+                    }
+                    _ => (),
+                },
             },
             None => (),
         }
