@@ -1,15 +1,14 @@
 use rusty_grad::Variable;
 
-#[cfg(test)]
+#[test]
 fn test_main() {
-    let mut x = Variable::new(1.0);
-    println! {"{:}",x};
+    let mut x_val = Variable::new(1.0);
+    let x = &mut x_val;
 
-    let mut y = Variable::new(3.0);
-    println! {"{:}",y};
+    let mut y_val = Variable::new(3.0);
+    let y = &mut y_val;
 
-    let mut sum = &mut x + &mut y;
-    println!("{:?}", sum);
+    let mut sum = x + y;
 
     sum.backward();
 
