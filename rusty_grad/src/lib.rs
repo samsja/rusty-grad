@@ -219,6 +219,46 @@ impl ops::Div<VariableRef> for VariableRef {
     }
 }
 
+impl ops::Add<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn add(mut self, float_to_add: f32) -> VariableRef {
+        self.borrow_mut().data += float_to_add;
+        self.clone()
+    }
+}
+
+impl ops::Sub<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn sub(mut self, float_to_sub: f32) -> VariableRef {
+        self.borrow_mut().data -= float_to_sub;
+        self.clone()
+    }
+}
+
+impl ops::Mul<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn mul(mut self, float: f32) -> VariableRef {
+        self.borrow_mut().data *= float;
+        self.clone()
+    }
+}
+
+impl ops::Div<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn div(mut self, float: f32) -> VariableRef {
+        if float == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        self.borrow_mut().data /= float;
+        self.clone()
+    }
+}
+
 // // ************************ unit tests ******************************
 
 #[cfg(test)]

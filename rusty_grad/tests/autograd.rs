@@ -46,20 +46,18 @@ fn test_complex_autograd() {
     assert_eq!(y_.borrow().grad, 1.0);
 }
 
-// **** these tests does not compile
+#[test]
+fn test_simple_autograd_with_const() {
+    let x_ = VariableRef::new(Variable::new(4.0));
+    let y_ = VariableRef::new(Variable::new(3.0));
 
-/* #[test] #[ignore] */
-// fn test_simple_autograd_with_const() {
-//     let x_ = VariableRef::new(Variable::new(4.0));
-//     let y_ = VariableRef::new(Variable::new(3.0));
-//
-//     let x = x_.clone();
-//     let y = y_.clone();
-//
-//     let mut z = (x + 2) / (y - 4);
-//
-//     z.backward();
-//
-//     assert_eq!(x_.borrow().grad, -1.0);
-//     assert_eq!(y_.borrow().grad, 6.0);
-// }
+    let x = x_.clone();
+    let y = y_.clone();
+
+    let mut z = (x + 2.0) * (y - 4.0);
+
+    z.backward();
+
+    assert_eq!(x_.borrow().grad, -1.0);
+    assert_eq!(y_.borrow().grad, 6.0);
+}
