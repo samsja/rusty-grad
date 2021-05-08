@@ -322,4 +322,58 @@ mod tests {
         let y = VariableRef::new(Variable::new(0.0));
         let _div = x / y;
     }
+
+    //**********test backward***********
+
+    #[test]
+    fn add_check_backward() {
+        let x = VariableRef::new(Variable::new(2.0));
+        let y = VariableRef::new(Variable::new(3.0));
+
+        let mut z = x.clone() + y.clone();
+
+        z.backward();
+
+        assert_eq!(x.borrow().grad, 1.0);
+        assert_eq!(y.borrow().grad, 1.0);
+    }
+
+    #[test]
+    fn sub_check_backward() {
+        let x = VariableRef::new(Variable::new(2.0));
+        let y = VariableRef::new(Variable::new(3.0));
+
+        let mut z = x.clone() - y.clone();
+
+        z.backward();
+
+        assert_eq!(x.borrow().grad, 1.0);
+        assert_eq!(y.borrow().grad, -1.0);
+    }
+
+    #[test]
+    fn mul_check_backward() {
+        let x = VariableRef::new(Variable::new(2.0));
+        let y = VariableRef::new(Variable::new(3.0));
+
+        let mut z = x.clone() * y.clone();
+
+        z.backward();
+
+        assert_eq!(x.borrow().grad, 3.0);
+        assert_eq!(y.borrow().grad, 2.0);
+    }
+
+    #[test]
+    fn div_check_backward() {
+        let x = VariableRef::new(Variable::new(2.0));
+        let y = VariableRef::new(Variable::new(3.0));
+
+        let mut z = x.clone() / y.clone();
+
+        z.backward();
+
+        assert_eq!(x.borrow().grad, 1.0 / 3.0);
+        assert_eq!(y.borrow().grad, -2.0 / 9.0);
+    }
 }
