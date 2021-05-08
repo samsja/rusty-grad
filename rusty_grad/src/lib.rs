@@ -83,8 +83,12 @@ impl Variable {
 }
 
 impl Variable {
+    /// this is the public backward it is equivalent to the private backward_in(1.0)
     pub fn backward(&mut self) {
-        self.backward_op();
+        self.backward_in(1.0);
+    }
+    fn backward_in(&mut self, grad: f32) {
+        self.backward_op(grad);
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
             match some_var {
@@ -96,16 +100,13 @@ impl Variable {
 }
 
 impl Variable {
-    pub fn backward_op(&mut self) {
+    pub fn backward_op(&mut self, grad: f32) {
         match &self.op {
             Some(op) => match op {
                 Operator::ADD => {
                     for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
                         match some_var {
-                            Some(var) => {
-                                let data = var.borrow().data;
-                                var.borrow_mut().grad += data
-                            }
+                            Some(var) => var.borrow_mut().grad += grad,
                             None => (),
                         }
                     }
@@ -115,8 +116,7 @@ impl Variable {
                     for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
                         match some_var {
                             Some(var) => {
-                                let data = var.borrow().data;
-                                var.borrow_mut().grad -= data;
+                                var.borrow_mut().grad -= grad;
                             }
                             None => (),
                         }
@@ -127,8 +127,8 @@ impl Variable {
                         let mut right_var = right.borrow_mut();
                         let mut left_var = left.borrow_mut();
 
-                        right_var.grad += right_var.data;
-                        left_var.grad += left_var.data;
+                        right_var.grad += left_var.data * grad;
+                        left_var.grad += right_var.data * grad;
                     }
                     _ => (),
                 },
@@ -141,8 +141,9 @@ impl Variable {
                             panic!("can't differentiate when divinding by zero");
                         }
 
-                        right_var.grad += 1.0 / right_var.data;
-                        left_var.grad -= right_var.data / (left_var.data * left_var.data);
+                        right_var.grad += grad / left_var.data;
+
+                        left_var.grad -= (grad * right_var.data) / (left_var.data * left_var.data);
                     }
                     _ => (),
                 },
