@@ -176,45 +176,45 @@ impl ops::Add<VariableRef> for VariableRef {
 }
 
 impl ops::Sub<VariableRef> for VariableRef {
-    type Output = Variable;
+    type Output = VariableRef;
 
-    fn sub(self, rhs: VariableRef) -> Variable {
-        Variable::new_node(
+    fn sub(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
             self.borrow().data - rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
             Some(Operator::ADD),
-        )
+        ))
     }
 }
 
 impl ops::Mul<VariableRef> for VariableRef {
-    type Output = Variable;
+    type Output = VariableRef;
 
-    fn mul(self, rhs: VariableRef) -> Variable {
-        Variable::new_node(
+    fn mul(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
             self.borrow().data * rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
             Some(Operator::ADD),
-        )
+        ))
     }
 }
 
 impl ops::Div<VariableRef> for VariableRef {
-    type Output = Variable;
+    type Output = VariableRef;
 
-    fn div(self, rhs: VariableRef) -> Variable {
+    fn div(self, rhs: VariableRef) -> VariableRef {
         if rhs.borrow().data == 0.0 {
             panic!("can't divide by zero");
         }
 
-        Variable::new_node(
+        VariableRef::new(Variable::new_node(
             self.borrow().data / rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
             Some(Operator::DIV),
-        )
+        ))
     }
 }
 
@@ -253,7 +253,7 @@ mod tests {
         let y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data - y.borrow().data;
-        assert_eq!(lhs, (x - y).data);
+        assert_eq!(lhs, (x - y).borrow().data);
     }
 
     #[test]
@@ -262,7 +262,7 @@ mod tests {
         let y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data * y.borrow().data;
-        assert_eq!(lhs, (x * y).data);
+        assert_eq!(lhs, (x * y).borrow().data);
     }
 
     #[test]
@@ -271,7 +271,7 @@ mod tests {
         let y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data / y.borrow().data;
-        assert_eq!(lhs, (x / y).data);
+        assert_eq!(lhs, (x / y).borrow().data);
     }
 
     #[test]
