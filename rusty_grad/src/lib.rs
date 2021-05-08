@@ -113,13 +113,18 @@ impl Variable {
                 }
 
                 Operator::SUB => {
-                    for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
-                        match some_var {
-                            Some(var) => {
-                                var.borrow_mut().grad -= grad;
-                            }
-                            None => (),
+                    match &mut self.left_root {
+                        Some(var) => {
+                            var.borrow_mut().grad += grad;
                         }
+                        None => (),
+                    }
+
+                    match &mut self.right_root {
+                        Some(var) => {
+                            var.borrow_mut().grad -= grad;
+                        }
+                        None => (),
                     }
                 }
                 Operator::MUL => match (&mut self.left_root, &mut self.right_root) {
@@ -141,9 +146,10 @@ impl Variable {
                             panic!("can't differentiate when divinding by zero");
                         }
 
-                        right_var.grad += grad / left_var.data;
+                        left_var.grad += grad / right_var.data;
 
-                        left_var.grad -= (grad * right_var.data) / (left_var.data * left_var.data);
+                        right_var.grad -=
+                            (grad * left_var.data) / (right_var.data * right_var.data);
                     }
                     _ => (),
                 },
@@ -184,7 +190,7 @@ impl ops::Sub<VariableRef> for VariableRef {
             self.borrow().data - rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
-            Some(Operator::ADD),
+            Some(Operator::SUB),
         ))
     }
 }
@@ -197,7 +203,7 @@ impl ops::Mul<VariableRef> for VariableRef {
             self.borrow().data * rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
-            Some(Operator::ADD),
+            Some(Operator::MUL),
         ))
     }
 }
