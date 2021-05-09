@@ -89,14 +89,19 @@ impl Variable {
 impl Variable {
     /// this is the public backward it is equivalent to the private backward_in(1.0)
     pub fn backward(&mut self) {
-        self.backward_in(1.0);
+        self.backward_in(true);
     }
-    fn backward_in(&mut self, grad: f32) {
-        self.backward_op(grad);
+
+    fn backward_in(&mut self, root: bool) {
+        if root {
+            self.backward_op(1.0);
+        } else {
+            self.backward_op(self.grad);
+        }
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
             match some_var {
-                Some(var) => var.borrow_mut().backward(),
+                Some(var) => var.borrow_mut().backward_in(false),
                 None => (),
             }
         }
