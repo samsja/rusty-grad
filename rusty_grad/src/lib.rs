@@ -178,10 +178,10 @@ pub enum Operator {
     DIV,
 }
 
-impl ops::Add<VariableRef> for VariableRef {
+impl<'a, 'b> ops::Add<&'b VariableRef> for &'a VariableRef {
     type Output = VariableRef;
 
-    fn add(self, rhs: VariableRef) -> VariableRef {
+    fn add(self, rhs: &'b VariableRef) -> VariableRef {
         VariableRef::new(Variable::new_node(
             self.borrow().data + rhs.borrow().data,
             Some(self.clone()),
@@ -191,10 +191,10 @@ impl ops::Add<VariableRef> for VariableRef {
     }
 }
 
-impl ops::Sub<VariableRef> for VariableRef {
+impl<'a, 'b> ops::Sub<&'b VariableRef> for &'a VariableRef {
     type Output = VariableRef;
 
-    fn sub(self, rhs: VariableRef) -> VariableRef {
+    fn sub(self, rhs: &'b VariableRef) -> VariableRef {
         VariableRef::new(Variable::new_node(
             self.borrow().data - rhs.borrow().data,
             Some(self.clone()),
@@ -204,10 +204,10 @@ impl ops::Sub<VariableRef> for VariableRef {
     }
 }
 
-impl ops::Mul<VariableRef> for VariableRef {
+impl<'a, 'b> ops::Mul<&'b VariableRef> for &'a VariableRef {
     type Output = VariableRef;
 
-    fn mul(self, rhs: VariableRef) -> VariableRef {
+    fn mul(self, rhs: &'b VariableRef) -> VariableRef {
         VariableRef::new(Variable::new_node(
             self.borrow().data * rhs.borrow().data,
             Some(self.clone()),
@@ -217,10 +217,10 @@ impl ops::Mul<VariableRef> for VariableRef {
     }
 }
 
-impl ops::Div<VariableRef> for VariableRef {
+impl<'a, 'b> ops::Div<&'b VariableRef> for &'a VariableRef {
     type Output = VariableRef;
 
-    fn div(self, rhs: VariableRef) -> VariableRef {
+    fn div(self, rhs: &'b VariableRef) -> VariableRef {
         if rhs.borrow().data == 0.0 {
             panic!("can't divide by zero");
         }
@@ -234,37 +234,37 @@ impl ops::Div<VariableRef> for VariableRef {
     }
 }
 
-impl ops::Add<f32> for VariableRef {
+impl<'a> ops::Add<f32> for &'a mut VariableRef {
     type Output = VariableRef;
 
-    fn add(mut self, float_to_add: f32) -> VariableRef {
+    fn add(self, float_to_add: f32) -> VariableRef {
         self.borrow_mut().data += float_to_add;
         self.clone()
     }
 }
 
-impl ops::Sub<f32> for VariableRef {
+impl<'a> ops::Sub<f32> for &'a mut VariableRef {
     type Output = VariableRef;
 
-    fn sub(mut self, float_to_sub: f32) -> VariableRef {
+    fn sub(self, float_to_sub: f32) -> VariableRef {
         self.borrow_mut().data -= float_to_sub;
         self.clone()
     }
 }
 
-impl ops::Mul<f32> for VariableRef {
+impl<'a> ops::Mul<f32> for &'a mut VariableRef {
     type Output = VariableRef;
 
-    fn mul(mut self, float: f32) -> VariableRef {
+    fn mul(self, float: f32) -> VariableRef {
         self.borrow_mut().data *= float;
         self.clone()
     }
 }
 
-impl ops::Div<f32> for VariableRef {
+impl<'a> ops::Div<f32> for &'a mut VariableRef {
     type Output = VariableRef;
 
-    fn div(mut self, float: f32) -> VariableRef {
+    fn div(self, float: f32) -> VariableRef {
         if float == 0.0 {
             panic!("can't divide by zero");
         }
@@ -288,25 +288,26 @@ mod tests {
 
     #[test]
     fn new_node_is_not_leaf() {
-        let x = VariableRef::new(Variable::new(2.0));
-        let y = VariableRef::new(Variable::new(2.0));
+        let ref x = VariableRef::new(Variable::new(2.0));
+        let ref y = VariableRef::new(Variable::new(2.0));
 
         assert_eq!(false, (x + y).borrow().is_leaf());
     }
 
     #[test]
     fn add_check_value() {
-        let x = VariableRef::new(Variable::new(1.0));
-        let y = VariableRef::new(Variable::new(2.0));
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let ref y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data + y.borrow().data;
+
         assert_eq!(lhs, (x + y).borrow().data);
     }
 
     #[test]
     fn sub_check_value() {
-        let x = VariableRef::new(Variable::new(1.0));
-        let y = VariableRef::new(Variable::new(2.0));
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let ref y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data - y.borrow().data;
         assert_eq!(lhs, (x - y).borrow().data);
@@ -314,8 +315,8 @@ mod tests {
 
     #[test]
     fn mul_check_value() {
-        let x = VariableRef::new(Variable::new(1.0));
-        let y = VariableRef::new(Variable::new(2.0));
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let ref y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data * y.borrow().data;
         assert_eq!(lhs, (x * y).borrow().data);
@@ -323,8 +324,8 @@ mod tests {
 
     #[test]
     fn div_check_value() {
-        let x = VariableRef::new(Variable::new(1.0));
-        let y = VariableRef::new(Variable::new(2.0));
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let ref y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data / y.borrow().data;
         assert_eq!(lhs, (x / y).borrow().data);
@@ -333,8 +334,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn div_check_panic_div_zero() {
-        let x = VariableRef::new(Variable::new(1.0));
-        let y = VariableRef::new(Variable::new(0.0));
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let ref y = VariableRef::new(Variable::new(0.0));
         let _div = x / y;
     }
 
@@ -342,10 +343,10 @@ mod tests {
 
     #[test]
     fn add_check_backward() {
-        let x = VariableRef::new(Variable::new(2.0));
-        let y = VariableRef::new(Variable::new(3.0));
+        let ref x = VariableRef::new(Variable::new(2.0));
+        let ref y = VariableRef::new(Variable::new(3.0));
 
-        let mut z = x.clone() + y.clone();
+        let mut z = x + y;
 
         z.backward();
 
@@ -355,10 +356,10 @@ mod tests {
 
     #[test]
     fn sub_check_backward() {
-        let x = VariableRef::new(Variable::new(2.0));
-        let y = VariableRef::new(Variable::new(3.0));
+        let ref x = VariableRef::new(Variable::new(2.0));
+        let ref y = VariableRef::new(Variable::new(3.0));
 
-        let mut z = x.clone() - y.clone();
+        let mut z = x - y;
 
         z.backward();
 
@@ -368,10 +369,10 @@ mod tests {
 
     #[test]
     fn mul_check_backward() {
-        let x = VariableRef::new(Variable::new(2.0));
-        let y = VariableRef::new(Variable::new(3.0));
+        let ref x = VariableRef::new(Variable::new(2.0));
+        let ref y = VariableRef::new(Variable::new(3.0));
 
-        let mut z = x.clone() * y.clone();
+        let mut z = x * y;
 
         z.backward();
 
@@ -381,10 +382,10 @@ mod tests {
 
     #[test]
     fn div_check_backward() {
-        let x = VariableRef::new(Variable::new(2.0));
-        let y = VariableRef::new(Variable::new(3.0));
+        let ref x = VariableRef::new(Variable::new(2.0));
+        let ref y = VariableRef::new(Variable::new(3.0));
 
-        let mut z = x.clone() / y.clone();
+        let mut z = x / y;
 
         z.backward();
 
