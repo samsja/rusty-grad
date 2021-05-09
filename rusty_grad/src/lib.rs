@@ -59,6 +59,10 @@ impl VariableRef {
     pub fn borrow_mut(&mut self) -> RefMut<Variable> {
         self.ref_.borrow_mut()
     }
+
+    pub fn backward(&mut self) {
+        self.borrow_mut().backward();
+    }
 }
 
 // *********************** DISPLAY ***********************
@@ -85,14 +89,19 @@ impl Variable {
 impl Variable {
     /// this is the public backward it is equivalent to the private backward_in(1.0)
     pub fn backward(&mut self) {
-        self.backward_in(1.0);
+        self.backward_in(true);
     }
-    fn backward_in(&mut self, grad: f32) {
-        self.backward_op(grad);
+
+    fn backward_in(&mut self, root: bool) {
+        if root {
+            self.backward_op(1.0);
+        } else {
+            self.backward_op(self.grad);
+        }
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
             match some_var {
-                Some(var) => var.borrow_mut().backward(),
+                Some(var) => var.borrow_mut().backward_in(false),
                 None => (),
             }
         }
@@ -170,15 +179,15 @@ pub enum Operator {
 }
 
 impl ops::Add<VariableRef> for VariableRef {
-    type Output = Variable;
+    type Output = VariableRef;
 
-    fn add(self, rhs: VariableRef) -> Variable {
-        Variable::new_node(
+    fn add(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
             self.borrow().data + rhs.borrow().data,
             Some(self.clone()),
             Some(rhs.clone()),
             Some(Operator::ADD),
-        )
+        ))
     }
 }
 
@@ -282,7 +291,7 @@ mod tests {
         let x = VariableRef::new(Variable::new(2.0));
         let y = VariableRef::new(Variable::new(2.0));
 
-        assert_eq!(false, (x + y).is_leaf());
+        assert_eq!(false, (x + y).borrow().is_leaf());
     }
 
     #[test]
@@ -291,7 +300,7 @@ mod tests {
         let y = VariableRef::new(Variable::new(2.0));
 
         let lhs = x.borrow().data + y.borrow().data;
-        assert_eq!(lhs, (x + y).data);
+        assert_eq!(lhs, (x + y).borrow().data);
     }
 
     #[test]
