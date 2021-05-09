@@ -16,7 +16,7 @@ fn test_simple_autograd() {
     let ref x = VariableRef::new(Variable::new(4.0));
     let ref y = VariableRef::new(Variable::new(3.0));
 
-    let mut z = (x + x) + (x + y);
+    let mut z = &(x + x) + &(x + y);
 
     z.backward();
 
@@ -29,7 +29,8 @@ fn test_simple_autograd_with_const() {
     let ref x = VariableRef::new(Variable::new(1.0));
     let ref y = VariableRef::new(Variable::new(1.0));
 
-    let mut z = (x + 2.0) + (y - 4.0);
+    let mut h = &(y - 4.0);
+    let mut z = &(x + 2.0);
 
     z.backward();
 
@@ -42,7 +43,7 @@ fn test_simple_two_stage_autograd() {
     let ref x = VariableRef::new(Variable::new(3.0));
     let ref y = VariableRef::new(Variable::new(5.0));
 
-    let h = x + y;
+    let ref h = x + y;
     let mut z = h * x;
 
     z.backward();
@@ -56,7 +57,7 @@ fn test_complexautograd_1() {
     let ref x = VariableRef::new(Variable::new(8.0));
     let ref y = VariableRef::new(Variable::new(-3.0));
 
-    let mut z = (x * y) * (x * y) + (x - y);
+    let mut z = &(&(x * y) * &(x * y)) + &(x - y);
 
     z.backward();
 
@@ -69,7 +70,7 @@ fn test_complexautograd_2() {
     let ref x = VariableRef::new(Variable::new(-8.0));
     let ref y = VariableRef::new(Variable::new(13.0));
 
-    let mut z = (x + y) * (x + y);
+    let mut z = &(x + y) * &(x + y);
     z.backward();
 
     assert_eq!(x.borrow().grad, 10.0);
