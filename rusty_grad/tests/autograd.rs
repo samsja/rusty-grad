@@ -5,7 +5,7 @@ use rusty_grad::VariableRef;
 fn test_double_add() {
     let x_ = VariableRef::new(Variable::new(4.0));
     let x = x_.clone();
-    let mut z = (x.clone() + x.clone());
+    let mut z = x.clone() + x.clone();
 
     z.backward();
 
