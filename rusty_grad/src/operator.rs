@@ -4,6 +4,8 @@ use crate::variable::Operator;
 use crate::variable::Variable;
 use crate::variable::VariableRef;
 
+//************* & and &
+
 impl<'a, 'b> ops::Add<&'b VariableRef> for &'a VariableRef {
     type Output = VariableRef;
 
@@ -60,6 +62,178 @@ impl<'a, 'b> ops::Div<&'b VariableRef> for &'a VariableRef {
     }
 }
 
+// & and Var
+
+impl<'b> ops::Add<&'b VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn add(self, rhs: &'b VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data + rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::ADD),
+        ))
+    }
+}
+impl<'b> ops::Sub<&'b VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn sub(self, rhs: &'b VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data - rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::SUB),
+        ))
+    }
+}
+
+impl<'b> ops::Mul<&'b VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn mul(self, rhs: &'b VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data * rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::MUL),
+        ))
+    }
+}
+
+impl<'b> ops::Div<&'b VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn div(self, rhs: &'b VariableRef) -> VariableRef {
+        if rhs.borrow().data == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        VariableRef::new(Variable::new_node(
+            self.borrow().data / rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::DIV),
+        ))
+    }
+}
+
+// var and &
+
+impl<'b> ops::Add<VariableRef> for &'b VariableRef {
+    type Output = VariableRef;
+
+    fn add(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data + rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::ADD),
+        ))
+    }
+}
+impl<'b> ops::Sub<VariableRef> for &'b VariableRef {
+    type Output = VariableRef;
+
+    fn sub(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data - rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::SUB),
+        ))
+    }
+}
+
+impl<'b> ops::Mul<VariableRef> for &'b VariableRef {
+    type Output = VariableRef;
+
+    fn mul(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data * rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::MUL),
+        ))
+    }
+}
+
+impl<'b> ops::Div<VariableRef> for &'b VariableRef {
+    type Output = VariableRef;
+
+    fn div(self, rhs: VariableRef) -> VariableRef {
+        if rhs.borrow().data == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        VariableRef::new(Variable::new_node(
+            self.borrow().data / rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::DIV),
+        ))
+    }
+}
+
+// Varref and varrref
+
+impl ops::Add<VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn add(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data + rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::ADD),
+        ))
+    }
+}
+
+impl ops::Sub<VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn sub(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data - rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::SUB),
+        ))
+    }
+}
+
+impl ops::Mul<VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn mul(self, rhs: VariableRef) -> VariableRef {
+        VariableRef::new(Variable::new_node(
+            self.borrow().data * rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::MUL),
+        ))
+    }
+}
+
+impl ops::Div<VariableRef> for VariableRef {
+    type Output = VariableRef;
+
+    fn div(self, rhs: VariableRef) -> VariableRef {
+        if rhs.borrow().data == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        VariableRef::new(Variable::new_node(
+            self.borrow().data / rhs.borrow().data,
+            Some(self.clone()),
+            Some(rhs.clone()),
+            Some(Operator::DIV),
+        ))
+    }
+}
+
 // ****** float OP variableRef
 
 impl ops::Add<f32> for VariableRef {
@@ -76,6 +250,19 @@ impl ops::Sub<f32> for VariableRef {
 
     fn sub(mut self, float_to_sub: f32) -> VariableRef {
         self.borrow_mut().data -= float_to_sub;
+        self.clone()
+    }
+}
+
+impl ops::Div<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn div(mut self, float: f32) -> VariableRef {
+        if float == 0.0 {
+            panic!("can't divide by zero");
+        }
+
+        self.borrow_mut().data /= float;
         self.clone()
     }
 }
@@ -184,5 +371,16 @@ mod tests {
     fn add_check_float() {
         let ref mut x = VariableRef::new(Variable::new(1.0));
         let _z = x + 4.0;
+    }
+
+    #[test]
+    fn add_check_type() {
+        let ref x = VariableRef::new(Variable::new(1.0));
+        let y = VariableRef::new(Variable::new(1.0));
+
+        let _z = y + x;
+
+        let y = VariableRef::new(Variable::new(1.0));
+        let _h = x + y;
     }
 }
