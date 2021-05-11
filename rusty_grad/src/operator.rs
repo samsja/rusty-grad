@@ -1,8 +1,8 @@
-use std::ops;
-
 use crate::variable::Operator;
 use crate::variable::Variable;
 use crate::variable::VariableRef;
+
+use std::ops;
 
 //************* & and &
 
@@ -316,6 +316,50 @@ impl<'a> ops::Div<f32> for &'a mut VariableRef {
     }
 }
 
+//**************************** Relu ***********************
+
+// impl Variable {
+//     pub fn relu(self) -> VariableRef {
+//         let mut data_after_relu = 0.0;
+//
+//         if self.data > 0.0 {
+//             data_after_relu = self.data;
+//         }
+//
+//         VariableRef::new(Variable::new_node(
+//             data_after_relu,
+//             Some(VariableRef::new(self)),
+//             None,
+//             Some(Operator::RELU),
+//         ))
+//     }
+// }
+/*  */
+
+impl Variable {
+    pub fn relu(self) -> VariableRef {
+        let var_ref = VariableRef::new(self);
+        var_ref.relu()
+    }
+}
+
+impl VariableRef {
+    pub fn relu(self) -> VariableRef {
+        let mut data_after_relu = 0.0;
+
+        if self.borrow().data > 0.0 {
+            data_after_relu = self.borrow().data;
+        }
+
+        VariableRef::new(Variable::new_node(
+            data_after_relu,
+            Some(self),
+            None,
+            Some(Operator::RELU),
+        ))
+    }
+}
+
 // // ************************ unit tests ******************************
 
 #[cfg(test)]
@@ -357,6 +401,26 @@ mod tests {
 
         let lhs = x.borrow().data / y.borrow().data;
         assert_eq!(lhs, (x / y).borrow().data);
+    }
+
+    #[test]
+    fn relu_check_value() {
+        let x = Variable::new(1.0);
+        let relu = if x.data > 0.0 { x.data } else { 0.0 };
+
+        let y = x.relu();
+        assert_eq!(relu, y.borrow().data);
+    }
+
+    #[test]
+    fn relu_ref_check_value() {
+        let x = VariableRef::new(Variable::new(1.0));
+        let relu = if x.borrow().data > 0.0 {
+            x.borrow().data
+        } else {
+            0.0
+        };
+        assert_eq!(relu, x.relu().borrow().data);
     }
 
     #[test]
