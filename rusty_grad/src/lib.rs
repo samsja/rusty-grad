@@ -234,6 +234,35 @@ impl<'a, 'b> ops::Div<&'b VariableRef> for &'a VariableRef {
     }
 }
 
+// ****** float OP variableRef
+
+impl ops::Add<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn add(mut self, float_to_add: f32) -> VariableRef {
+        self.borrow_mut().data += float_to_add;
+        self.clone()
+    }
+}
+
+impl ops::Sub<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn sub(mut self, float_to_sub: f32) -> VariableRef {
+        self.borrow_mut().data -= float_to_sub;
+        self.clone()
+    }
+}
+
+impl ops::Mul<f32> for VariableRef {
+    type Output = VariableRef;
+
+    fn mul(mut self, float: f32) -> VariableRef {
+        self.borrow_mut().data *= float;
+        self.clone()
+    }
+}
+
 impl<'a> ops::Add<f32> for &'a mut VariableRef {
     type Output = VariableRef;
 
@@ -340,6 +369,12 @@ mod tests {
     }
 
     //**********test backward***********
+
+    #[test]
+    fn add_check_float() {
+        let ref mut x = VariableRef::new(Variable::new(1.0));
+        let z = x + 4.0;
+    }
 
     #[test]
     fn add_check_backward() {

@@ -25,20 +25,6 @@ fn test_simple_autograd() {
 }
 
 #[test]
-fn test_simple_autograd_with_const() {
-    let ref x = VariableRef::new(Variable::new(1.0));
-    let ref y = VariableRef::new(Variable::new(1.0));
-
-    let mut h = &(y - 4.0);
-    let mut z = &(x + 2.0);
-
-    z.backward();
-
-    assert_eq!(x.borrow().grad, 1.0);
-    assert_eq!(y.borrow().grad, 1.0);
-}
-
-#[test]
 fn test_simple_two_stage_autograd() {
     let ref x = VariableRef::new(Variable::new(3.0));
     let ref y = VariableRef::new(Variable::new(5.0));
