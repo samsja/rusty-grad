@@ -162,24 +162,11 @@ mod tests {
         assert_eq!(true, x.borrow().is_leaf());
     }
 
-    // #[test]
-    // fn new_node_is_not_leaf() {
-    // let ref x = Variable::new(2.0);
-    // let ref y = Variable::new(2.0);
-    //
-    // assert_eq!(false, (x + y).borrow().is_leaf());
-    // }
+    #[test]
+    fn new_node_is_not_leaf() {
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(2.0);
 
-    // #[test]
-    // fn div_check_backward() {
-    //     let ref x = Variable::new(2.0);
-    //     let ref y = Variable::new(3.0);
-    //
-    //     let mut z = x / y;
-    //
-    //     z.backward();
-    //
-    //     assert_eq!(x.borrow().grad, 1.0 / 3.0);
-    //     assert_eq!(y.borrow().grad, -2.0 / 9.0);
-    /* } */
+        assert_eq!(false, (x + y).borrow().is_leaf());
+    }
 }
