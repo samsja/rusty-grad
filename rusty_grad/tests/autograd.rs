@@ -1,5 +1,4 @@
 use rusty_grad::variable::Variable;
-use rusty_grad::variable::VariableRef;
 
 #[test]
 fn test_double_add() {
