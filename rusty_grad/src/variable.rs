@@ -21,19 +21,21 @@ impl Variable {
         left_root: Option<VariableRef>,
         right_root: Option<VariableRef>,
         op: Option<Operator>,
-    ) -> Variable {
-        Variable {
+    ) -> VariableRef {
+        let var = Variable {
             data,
             grad: 0.0,
             left_root,
             right_root,
             op,
-        }
+        };
+
+        VariableRef::new(var)
     }
 }
 
 impl Variable {
-    pub fn new(data: f32) -> Variable {
+    pub fn new(data: f32) -> VariableRef {
         Variable::new_node(data, None, None, None)
     }
 }
@@ -184,13 +186,13 @@ mod tests {
     #[test]
     fn new_is_leaf() {
         let x = Variable::new(2.0);
-        assert_eq!(true, x.is_leaf());
+        assert_eq!(true, x.borrow().is_leaf());
     }
 
     #[test]
     fn new_node_is_not_leaf() {
-        let ref x = VariableRef::new(Variable::new(2.0));
-        let ref y = VariableRef::new(Variable::new(2.0));
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(2.0);
 
         assert_eq!(false, (x + y).borrow().is_leaf());
     }
@@ -198,8 +200,8 @@ mod tests {
 
     #[test]
     fn add_check_backward() {
-        let ref x = VariableRef::new(Variable::new(2.0));
-        let ref y = VariableRef::new(Variable::new(3.0));
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(3.0);
 
         let mut z = x + y;
 
@@ -211,8 +213,8 @@ mod tests {
 
     #[test]
     fn sub_check_backward() {
-        let ref x = VariableRef::new(Variable::new(2.0));
-        let ref y = VariableRef::new(Variable::new(3.0));
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(3.0);
 
         let mut z = x - y;
 
@@ -224,8 +226,8 @@ mod tests {
 
     #[test]
     fn mul_check_backward() {
-        let ref x = VariableRef::new(Variable::new(2.0));
-        let ref y = VariableRef::new(Variable::new(3.0));
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(3.0);
 
         let mut z = x * y;
 
@@ -237,8 +239,8 @@ mod tests {
 
     #[test]
     fn div_check_backward() {
-        let ref x = VariableRef::new(Variable::new(2.0));
-        let ref y = VariableRef::new(Variable::new(3.0));
+        let ref x = Variable::new(2.0);
+        let ref y = Variable::new(3.0);
 
         let mut z = x / y;
 

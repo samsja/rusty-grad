@@ -3,7 +3,7 @@ use rusty_grad::variable::VariableRef;
 
 #[test]
 fn test_double_add() {
-    let ref x = VariableRef::new(Variable::new(4.0));
+    let ref x = Variable::new(4.0);
     let mut z = x + x;
 
     z.backward();
@@ -13,8 +13,8 @@ fn test_double_add() {
 
 #[test]
 fn test_simple_autograd() {
-    let ref x = VariableRef::new(Variable::new(4.0));
-    let ref y = VariableRef::new(Variable::new(3.0));
+    let ref x = Variable::new(4.0);
+    let ref y = Variable::new(3.0);
 
     let mut z = (x + x) + (x + y);
 
@@ -26,8 +26,8 @@ fn test_simple_autograd() {
 
 #[test]
 fn test_simple_two_stage_autograd() {
-    let ref x = VariableRef::new(Variable::new(3.0));
-    let ref y = VariableRef::new(Variable::new(5.0));
+    let ref x = Variable::new(3.0);
+    let ref y = Variable::new(5.0);
 
     let ref h = x + y;
     let mut z = h * x;
@@ -40,8 +40,8 @@ fn test_simple_two_stage_autograd() {
 
 #[test]
 fn test_complexautograd_1() {
-    let ref x = VariableRef::new(Variable::new(8.0));
-    let ref y = VariableRef::new(Variable::new(-3.0));
+    let ref x = Variable::new(8.0);
+    let ref y = Variable::new(-3.0);
 
     let mut z = (x * y) * (x * y) + (x - y);
 
@@ -53,8 +53,8 @@ fn test_complexautograd_1() {
 
 #[test]
 fn test_complexautograd_2() {
-    let ref x = VariableRef::new(Variable::new(-8.0));
-    let ref y = VariableRef::new(Variable::new(13.0));
+    let ref x = Variable::new(-8.0);
+    let ref y = Variable::new(13.0);
 
     let mut z = (x + y) * (x + y);
     z.backward();
