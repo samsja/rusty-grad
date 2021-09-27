@@ -1,56 +1,78 @@
 use std::ops;
 
+use ndarray::{Array, Dimension, NdFloat};
+
 use crate::variable::Module;
 use crate::variable::VariableRef;
 
 pub struct Add {}
 
-impl Module for Add {
-    fn forward(&self, x: f32, y: f32) -> f32 {
+impl<T, D> Module<T, D> for Add
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    fn forward<'a, 'b>(&self, x: &'a Array<T, D>, y: &'b Array<T, D>) -> Array<T, D> {
         x + y
     }
 
     fn backward<'a>(
         &self,
-        grad: &'a f32,
-        _left_ref: &'a VariableRef,
-        _right_ref: &'a VariableRef,
-    ) -> [f32; 2] {
-        [*grad, *grad]
+        grad: &'a Array<T, D>,
+        _left_ref: &'a VariableRef<T, D>,
+        _right_ref: &'a VariableRef<T, D>,
+    ) -> [Array<T, D>; 2] {
+        [grad.clone(), grad.clone()]
     }
 }
 
-impl<'a, 'b> ops::Add<&'b VariableRef> for &'a VariableRef {
-    type Output = VariableRef;
+impl<'a, 'b, T, D> ops::Add<&'b VariableRef<T, D>> for &'a VariableRef<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    type Output = VariableRef<T, D>;
 
-    fn add(self, rhs: &'b VariableRef) -> VariableRef {
+    fn add(self, rhs: &'b VariableRef<T, D>) -> VariableRef<T, D> {
         let module = Add {};
         module.subscribe(self, rhs, Box::new(Add {}))
     }
 }
 
-impl<'a> ops::Add<&'a VariableRef> for VariableRef {
-    type Output = VariableRef;
+impl<'a, T, D> ops::Add<&'a VariableRef<T, D>> for VariableRef<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    type Output = VariableRef<T, D>;
 
-    fn add(self, rhs: &'a VariableRef) -> VariableRef {
+    fn add(self, rhs: &'a VariableRef<T, D>) -> VariableRef<T, D> {
         let module = Add {};
         module.subscribe(&self, rhs, Box::new(Add {}))
     }
 }
 
-impl<'a> ops::Add<VariableRef> for &'a VariableRef {
-    type Output = VariableRef;
+impl<'a, T, D> ops::Add<VariableRef<T, D>> for &'a VariableRef<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    type Output = VariableRef<T, D>;
 
-    fn add(self, rhs: VariableRef) -> VariableRef {
+    fn add(self, rhs: VariableRef<T, D>) -> VariableRef<T, D> {
         let module = Add {};
         module.subscribe(self, &rhs, Box::new(Add {}))
     }
 }
 
-impl ops::Add<VariableRef> for VariableRef {
-    type Output = VariableRef;
+impl<T, D> ops::Add<VariableRef<T, D>> for VariableRef<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    type Output = VariableRef<T, D>;
 
-    fn add(self, rhs: VariableRef) -> VariableRef {
+    fn add(self, rhs: VariableRef<T, D>) -> VariableRef<T, D> {
         let module = Add {};
         module.subscribe(&self, &rhs, Box::new(Add {}))
     }
@@ -60,17 +82,18 @@ impl ops::Add<VariableRef> for VariableRef {
 mod tests {
 
     use crate::variable::Variable;
+    use ndarray::array;
 
     #[test]
     fn add_check_backward() {
-        let ref x = Variable::new(2.0);
-        let ref y = Variable::new(3.0);
+        let ref x = Variable::new(array!([2.0]));
+        let ref y = Variable::new(array!([3.0]));
 
         let mut z = x + y;
 
         z.backward();
 
-        assert_eq!(x.borrow().grad, 1.0);
-        assert_eq!(y.borrow().grad, 1.0);
+        assert_eq!(x.borrow().grad, array!([1.0]));
+        assert_eq!(y.borrow().grad, array!([1.0]));
     }
 }

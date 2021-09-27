@@ -34,7 +34,7 @@ where
         let grad_zero = Array::<T, D>::zeros(data.raw_dim());
         let var = Variable {
             data,
-            grad: grad_zero, // should be some zeros function
+            grad: grad_zero,
             left_root,
             right_root,
             module,
@@ -122,7 +122,7 @@ where
         grad: &'a Array<T, D>,
         left_ref: &'a VariableRef<T, D>,
         right_ref: &'a VariableRef<T, D>,
-    ) -> [f32; 2];
+    ) -> [Array<T, D>; 2];
 
     fn subscribe<'a, 'b>(
         &self,
@@ -160,9 +160,13 @@ where
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
                 (Some(left_ref), Some(right_ref)) => {
-                    let _grads_to_add = module.backward(&grad, left_ref, right_ref);
-                    // left_ref.borrow_mut().grad += grads_to_add[0];
-                    // right_ref.borrow_mut().grad += grads_to_add[1]
+                    let grads_to_add = module.backward(&grad, left_ref, right_ref);
+
+                    let mut left_var = left_ref.borrow_mut();
+                    left_var.grad += &grads_to_add[0];
+
+                    let mut right_var = right_ref.borrow_mut();
+                    right_var.grad += &grads_to_add[1];
                 }
                 (_, None) => (),
                 (None, _) => (),
@@ -183,7 +187,7 @@ where
 
     fn backward_in(&mut self, root: bool) {
         let grad = match root {
-            true => Array::<T, D>::zeros(self.grad.raw_dim()),
+            true => Array::<T, D>::ones(self.grad.raw_dim()),
             false => self.grad.clone(),
         };
 
@@ -203,18 +207,18 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ndarray::Ix1;
+    use ndarray::array;
     #[test]
     fn new_is_leaf() {
-        let x = Variable::new(Array::<f32, Ix1>::zeros(5));
+        let x = Variable::new(array!([1.0]));
         assert_eq!(true, x.borrow().is_leaf());
     }
 
-    // #[test]
-    // fn new_node_is_not_leaf() {
-    // let ref x = Variable::new(2.0);
-    // let ref y = Variable::new(2.0);
-    //
-    // assert_eq!(false, (x + y).borrow().is_leaf());
-    // }
+    #[test]
+    fn new_node_is_not_leaf() {
+        let ref x = Variable::new(array!([2.0]));
+        let ref y = Variable::new(array!([2.0]));
+
+        assert_eq!(false, (x + y).borrow().is_leaf());
+    }
 }
