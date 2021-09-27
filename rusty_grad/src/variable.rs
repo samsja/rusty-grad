@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use ndarray::{Array, Dimension, Ix1, NdFloat};
+use ndarray::{Array, Dimension, NdFloat};
 
 pub struct Variable<T, D>
 where
@@ -31,7 +31,7 @@ where
         right_root: Option<VariableRef<T, D>>,
         module: Option<Box<dyn Module<T, D>>>,
     ) -> VariableRef<T, D> {
-        let grad_zero = data.clone(); //should be zero
+        let grad_zero = Array::<T, D>::zeros(data.raw_dim());
         let var = Variable {
             data,
             grad: grad_zero, // should be some zeros function
@@ -156,11 +156,11 @@ where
     T: NdFloat,
     D: Dimension,
 {
-    pub fn backward_module<'a>(&mut self, grad: &'a Array<T, D>) {
+    pub fn backward_module<'a>(&mut self, grad: Array<T, D>) {
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
                 (Some(left_ref), Some(right_ref)) => {
-                    let grads_to_add = module.backward(&grad, left_ref, right_ref);
+                    let _grads_to_add = module.backward(&grad, left_ref, right_ref);
                     // left_ref.borrow_mut().grad += grads_to_add[0];
                     // right_ref.borrow_mut().grad += grads_to_add[1]
                 }
@@ -182,14 +182,11 @@ where
     }
 
     fn backward_in(&mut self, root: bool) {
-        /*         if root { */
-        //     self.backward_module(&mut self.grad); //should be ones
-        //
-        // } else {
-        //     self.backward_module(&mut self.grad);
-        // }
-        /*  */
-        let ref grad = self.grad.clone();
+        let grad = match root {
+            true => Array::<T, D>::zeros(self.grad.raw_dim()),
+            false => self.grad.clone(),
+        };
+
         self.backward_module(grad);
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
@@ -206,18 +203,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use ndarray::Ix1;
     #[test]
     fn new_is_leaf() {
         let x = Variable::new(Array::<f32, Ix1>::zeros(5));
         assert_eq!(true, x.borrow().is_leaf());
-    }
-
-    #[test]
-    fn play() {
-        let x = Variable::new(Array::<f32, Ix1>::zeros(5));
-
-        let y = Variable::new(Array::<f32, Ix1>::ones(5));
     }
 
     // #[test]
