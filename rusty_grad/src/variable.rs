@@ -162,11 +162,16 @@ where
                 (Some(left_ref), Some(right_ref)) => {
                     let grads_to_add = module.backward(&grad, left_ref, right_ref);
 
-                    let mut left_var = left_ref.borrow_mut();
-                    left_var.grad += &grads_to_add[0];
+                    // call the borrow_mut in two different scopes so that when left and right left_root target the same variable it does not throw a BorrowMutError
+                    {
+                        let mut left_var = left_ref.borrow_mut();
+                        left_var.grad += &grads_to_add[0];
+                    }
 
-                    let mut right_var = right_ref.borrow_mut();
-                    right_var.grad += &grads_to_add[1];
+                    {
+                        let mut right_var = right_ref.borrow_mut();
+                        right_var.grad += &grads_to_add[1];
+                    }
                 }
                 (_, None) => (),
                 (None, _) => (),
