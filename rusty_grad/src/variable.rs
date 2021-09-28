@@ -13,7 +13,7 @@ where
     D: Dimension,
 {
     pub data: Array<T, D>,
-    pub grad: Array<T, D>,
+    pub grad: Option<Array<T, D>>,
     pub left_root: Option<VariableRef<T, D>>,
     pub right_root: Option<VariableRef<T, D>>,
     pub module: Option<Box<dyn Module<T, D>>>,
@@ -34,7 +34,7 @@ where
         let grad_zero = Array::<T, D>::zeros(data.raw_dim());
         let var = Variable {
             data,
-            grad: grad_zero,
+            grad: Some(grad_zero),
             left_root,
             right_root,
             module,
@@ -94,7 +94,10 @@ where
     D: Dimension,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Variable( {} grad : {})", self.data, self.grad)
+        match &self.grad {
+            Some(grad) => write!(f, "Variable( {} grad : {})", self.data, grad),
+            _ => write!(f, "Variable( {} , no grad required)", self.data),
+        }
     }
 }
 
@@ -149,6 +152,20 @@ where
     pub fn is_leaf(&self) -> bool {
         self.right_root.is_none() & self.left_root.is_none()
     }
+
+    pub fn requires_grad(&self) -> bool {
+        match self.grad {
+            Some(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_grad(&self) -> Array<T, D> {
+        match &self.grad {
+            Some(grad) => grad.clone(),
+            None => Array::<T, D>::ones(self.data.raw_dim()),
+        }
+    }
 }
 
 impl<T, D> Variable<T, D>
@@ -165,12 +182,24 @@ where
                     // call the borrow_mut in two different scopes so that when left and right left_root target the same variable it does not throw a BorrowMutError
                     {
                         let mut left_var = left_ref.borrow_mut();
-                        left_var.grad += &grads_to_add[0];
+
+                        match &mut left_var.grad {
+                            Some(grad) => {
+                                *grad += &grads_to_add[0];
+                            }
+                            _ => (),
+                        }
                     }
 
                     {
                         let mut right_var = right_ref.borrow_mut();
-                        right_var.grad += &grads_to_add[1];
+
+                        match &mut right_var.grad {
+                            Some(grad) => {
+                                *grad += &grads_to_add[0];
+                            }
+                            _ => (),
+                        }
                     }
                 }
                 (_, None) => (),
@@ -187,20 +216,16 @@ where
     D: Dimension,
 {
     pub fn backward(&mut self) {
-        self.backward_in(true);
+        self.backward_in();
     }
 
-    fn backward_in(&mut self, root: bool) {
-        let grad = match root {
-            true => Array::<T, D>::ones(self.grad.raw_dim()),
-            false => self.grad.clone(),
-        };
-
+    fn backward_in(&mut self) {
+        let grad = self.get_grad();
         self.backward_module(grad);
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
             match some_var {
-                Some(var) => var.borrow_mut().backward_in(false),
+                Some(var) => var.borrow_mut().backward_in(),
                 None => (),
             }
         }
