@@ -42,13 +42,7 @@ where
 
         VariableRef::new(var)
     }
-}
 
-impl<T, D> Variable<T, D>
-where
-    T: NdFloat,
-    D: Dimension,
-{
     pub fn new(data: Array<T, D>) -> VariableRef<T, D> {
         Variable::new_node(data, None, None, None)
     }
@@ -166,13 +160,7 @@ where
             None => Array::<T, D>::ones(self.data.raw_dim()),
         }
     }
-}
 
-impl<T, D> Variable<T, D>
-where
-    T: NdFloat,
-    D: Dimension,
-{
     pub fn backward_module<'a>(&mut self, grad: Array<T, D>) {
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
@@ -208,13 +196,7 @@ where
             None => (),
         }
     }
-}
 
-impl<T, D> Variable<T, D>
-where
-    T: NdFloat,
-    D: Dimension,
-{
     pub fn backward(&mut self) {
         self.backward_in(true);
     }
