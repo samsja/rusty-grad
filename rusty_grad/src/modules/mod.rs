@@ -1,2 +1,2 @@
 pub mod operator;
-// pub mod relu;
+pub mod relu;
