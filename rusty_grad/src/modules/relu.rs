@@ -1,4 +1,4 @@
-use ndarray::{Array, Dimension, NdFloat};
+use ndarray::{Array, Dimension, NdFloat, Zip};
 
 use crate::variable::Module;
 use crate::variable::VariableRef;
@@ -18,12 +18,18 @@ where
         &self,
         grad: &'a Array<T, D>,
         left_ref: &'a VariableRef<T, D>,
-        right_ref: &'a VariableRef<T, D>,
+        _right_ref: &'a VariableRef<T, D>,
     ) -> [Array<T, D>; 2] {
-        let left_var = left_ref.borrow();
+        let mut grad = grad.clone();
+        let ref data = left_ref.borrow().data;
 
-        //need to implement the right backwrad
-        [grad.clone(), grad.clone()]
+        Zip::from(&mut grad).and(data).for_each(|g, &d| {
+            *g = if d.is_sign_positive() { *g } else { T::zero() };
+        });
+
+        let zero = Array::<T, D>::zeros(grad.raw_dim());
+
+        [grad, zero]
     }
 }
 
