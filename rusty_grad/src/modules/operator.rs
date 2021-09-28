@@ -176,8 +176,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().get_grad(), array!([1.0]));
-        assert_eq!(y.borrow().get_grad(), array!([1.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([1.0]));
     }
 
     #[test]
@@ -189,8 +189,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().get_grad(), array!([1.0]));
-        assert_eq!(y.borrow().get_grad(), array!([-1.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([-1.0]));
     }
 
     #[test]
@@ -202,8 +202,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().get_grad(), array!([3.0]));
-        assert_eq!(y.borrow().get_grad(), array!([2.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([3.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([2.0]));
     }
 
     #[test]
@@ -215,7 +215,7 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().get_grad(), array!([1.0 / 3.0]));
-        assert_eq!(y.borrow().get_grad(), array!([-2.0 / 9.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0 / 3.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([-2.0 / 9.0]));
     }
 }

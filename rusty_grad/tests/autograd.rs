@@ -8,7 +8,7 @@ fn test_double_add() {
 
     z.backward();
 
-    assert_eq!(x.borrow().get_grad(), array!([2.0]));
+    assert_eq!(x.borrow().get_grad_f(), array!([2.0]));
 }
 
 #[test]
@@ -20,8 +20,8 @@ fn test_simple_autograd() {
 
     z.backward();
 
-    assert_eq!(x.borrow().get_grad(), array!([3.0]));
-    assert_eq!(y.borrow().get_grad(), array!([1.0]));
+    assert_eq!(x.borrow().get_grad_f(), array!([3.0]));
+    assert_eq!(y.borrow().get_grad_f(), array!([1.0]));
 }
 
 #[test]
@@ -34,8 +34,8 @@ fn test_simple_two_stage_autograd() {
 
     z.backward();
 
-    assert_eq!(x.borrow().get_grad(), array!([11.0]));
-    assert_eq!(y.borrow().get_grad(), array!([3.0]));
+    assert_eq!(x.borrow().get_grad_f(), array!([11.0]));
+    assert_eq!(y.borrow().get_grad_f(), array!([3.0]));
 }
 
 #[test]
@@ -47,8 +47,8 @@ fn test_complexautograd_1() {
 
     z.backward();
 
-    assert_eq!(x.borrow().get_grad(), array!([145.0]));
-    assert_eq!(y.borrow().get_grad(), array!([-385.0]));
+    assert_eq!(x.borrow().get_grad_f(), array!([145.0]));
+    assert_eq!(y.borrow().get_grad_f(), array!([-385.0]));
 }
 
 #[test]
@@ -59,6 +59,6 @@ fn test_complexautograd_2() {
     let mut z = (x + y) * (x + y);
     z.backward();
 
-    assert_eq!(x.borrow().get_grad(), array!([10.0]));
-    assert_eq!(y.borrow().get_grad(), array!([10.0]));
+    assert_eq!(x.borrow().get_grad_f(), array!([10.0]));
+    assert_eq!(y.borrow().get_grad_f(), array!([10.0]));
 }

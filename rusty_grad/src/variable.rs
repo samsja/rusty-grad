@@ -154,11 +154,15 @@ where
         }
     }
 
-    pub fn get_grad(&self) -> Array<T, D> {
+    pub fn get_grad(&self) -> Result<Array<T, D>, &str> {
         match &self.grad {
-            Some(grad) => grad.clone(),
-            None => Array::<T, D>::ones(self.data.raw_dim()),
+            Some(grad) => Ok(grad.clone()),
+            None => Err("This variable does not requires grad"),
         }
+    }
+
+    pub fn get_grad_f(&self) -> Array<T, D> {
+        self.get_grad().unwrap()
     }
 
     pub fn backward_module<'a>(&mut self, grad: Array<T, D>) {
@@ -208,7 +212,7 @@ where
                 grad = Array::<T, D>::ones(self.data.raw_dim());
             }
             false => {
-                grad = self.get_grad();
+                grad = self.get_grad().unwrap();
             }
         }
         self.backward_module(grad);

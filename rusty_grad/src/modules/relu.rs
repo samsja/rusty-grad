@@ -66,7 +66,7 @@ mod tests {
         let mut x = Variable::new(array!([2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().get_grad(), array!([1.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
     }
 
     #[test]
@@ -74,6 +74,6 @@ mod tests {
         let mut x = Variable::new(array!([-2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().get_grad(), array!([0.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([0.0]));
     }
 }
