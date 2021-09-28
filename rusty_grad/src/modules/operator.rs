@@ -22,6 +22,7 @@ where
         _left_ref: &'a VariableRef<T, D>,
         _right_ref: &'a VariableRef<T, D>,
     ) -> [Array<T, D>; 2] {
+        println!("{}", grad);
         [grad.clone(), grad.clone()]
     }
 }
@@ -175,8 +176,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().grad, array!([1.0]));
-        assert_eq!(y.borrow().grad, array!([1.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([1.0]));
     }
 
     #[test]
@@ -188,8 +189,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().grad, array!([1.0]));
-        assert_eq!(y.borrow().grad, array!([-1.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([-1.0]));
     }
 
     #[test]
@@ -201,8 +202,8 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().grad, array!([3.0]));
-        assert_eq!(y.borrow().grad, array!([2.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([3.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([2.0]));
     }
 
     #[test]
@@ -214,7 +215,7 @@ mod tests {
 
         z.backward();
 
-        assert_eq!(x.borrow().grad, array!([1.0 / 3.0]));
-        assert_eq!(y.borrow().grad, array!([-2.0 / 9.0]));
+        assert_eq!(x.borrow().get_grad_f(), array!([1.0 / 3.0]));
+        assert_eq!(y.borrow().get_grad_f(), array!([-2.0 / 9.0]));
     }
 }
