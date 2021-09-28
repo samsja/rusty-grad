@@ -7,43 +7,34 @@ use std::rc::Rc;
 
 use ndarray::{Array, Dimension, NdFloat};
 
-pub struct Variable<T, D, Dl, Dr>
+pub struct Variable<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
     pub data: Array<T, D>,
-    pub grad: Option<Array<T, D>>,
-    pub left_root: Option<VariableRef<T, D, Dl, Dr>>,
-    pub right_root: Option<VariableRef<T, D, Dl, Dr>>,
-    pub module: Option<Box<dyn Module<T, D, Dl, Dr>>>,
+    pub grad: Array<T, D>,
+    pub left_root: Option<VariableRef<T, D>>,
+    pub right_root: Option<VariableRef<T, D>>,
+    pub module: Option<Box<dyn Module<T, D>>>,
 }
 
 // ********************** INIT **********************************
-impl<T, D, Dl, Dr> Variable<T, D, Dl, Dr>
+impl<T, D> Variable<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
-    fn new_node_i(
+    pub fn new_node(
         data: Array<T, D>,
-        left_root: Option<VariableRef<T, D, Dl, Dr>>,
-        right_root: Option<VariableRef<T, D, Dl, Dr>>,
-        module: Option<Box<dyn Module<T, D, Dl, Dr>>>,
-        requires_grad: bool,
-    ) -> VariableRef<T, D, Dl, Dr> {
-        let grad = match requires_grad {
-            true => Some(Array::<T, D>::zeros(data.raw_dim())),
-            false => None,
-        };
-
+        left_root: Option<VariableRef<T, D>>,
+        right_root: Option<VariableRef<T, D>>,
+        module: Option<Box<dyn Module<T, D>>>,
+    ) -> VariableRef<T, D> {
+        let grad_zero = Array::<T, D>::zeros(data.raw_dim());
         let var = Variable {
             data,
-            grad,
+            grad: grad_zero,
             left_root,
             right_root,
             module,
@@ -51,59 +42,43 @@ where
 
         VariableRef::new(var)
     }
-    fn new_node(
-        data: Array<T, D>,
-        left_root: Option<VariableRef<T, D, Dl, Dr>>,
-        right_root: Option<VariableRef<T, D, Dl, Dr>>,
-        module: Option<Box<dyn Module<T, D, Dl, Dr>>>,
-    ) -> VariableRef<T, D, Dl, Dr> {
-        Variable::new_node_i(data, left_root, right_root, module, true)
-    }
 }
 
-impl<T, D> Variable<T, D, D, D>
+impl<T, D> Variable<T, D>
 where
     T: NdFloat,
     D: Dimension,
 {
-    pub fn new(data: Array<T, D>) -> VariableRef<T, D, D, D> {
-        Variable::new_node_i(data, None, None, None, true)
-    }
-
-    pub fn new_no_grad(data: Array<T, D>) -> VariableRef<T, D, D, D> {
-        Variable::new_node_i(data, None, None, None, false)
+    pub fn new(data: Array<T, D>) -> VariableRef<T, D> {
+        Variable::new_node(data, None, None, None)
     }
 }
 
 #[derive(Clone)]
-pub struct VariableRef<T, D, Dl, Dr>
+pub struct VariableRef<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
-    ref_: Rc<RefCell<Variable<T, D, Dl, Dr>>>,
+    ref_: Rc<RefCell<Variable<T, D>>>,
 }
 
-impl<T, D, Dl, Dr> VariableRef<T, D, Dl, Dr>
+impl<T, D> VariableRef<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
-    pub fn new(var: Variable<T, D, Dl, Dr>) -> VariableRef<T, D, Dl, Dr> {
+    pub fn new(var: Variable<T, D>) -> VariableRef<T, D> {
         VariableRef {
             ref_: Rc::new(RefCell::new(var)),
         }
     }
 
-    pub fn borrow(&self) -> Ref<Variable<T, D, Dl, Dr>> {
+    pub fn borrow(&self) -> Ref<Variable<T, D>> {
         self.ref_.borrow()
     }
 
-    pub fn borrow_mut(&mut self) -> RefMut<Variable<T, D, Dl, Dr>> {
+    pub fn borrow_mut(&mut self) -> RefMut<Variable<T, D>> {
         self.ref_.borrow_mut()
     }
 
@@ -113,27 +88,20 @@ where
 }
 
 // *********************** DISPLAY ***********************
-impl<T, D, Dl, Dr> fmt::Display for Variable<T, D, Dl, Dr>
+impl<T, D> fmt::Display for Variable<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.grad {
-            Some(grad) => write!(f, "Variable( {} grad : {})", self.data, grad),
-            _ => write!(f, "Variable( {} , no grad required)", self.data),
-        }
+        write!(f, "Variable( {} grad : {})", self.data, self.grad)
     }
 }
 
-impl<T, D, Dl, Dr> fmt::Display for VariableRef<T, D, Dl, Dr>
+impl<T, D> fmt::Display for VariableRef<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.borrow())
@@ -142,29 +110,27 @@ where
 
 // ****************************MODULE***********************
 
-pub trait Module<T, D, Dl, Dr>
+pub trait Module<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
     fn forward<'a, 'b>(&self, x: &'a Array<T, D>, y: &'b Array<T, D>) -> Array<T, D>;
 
     fn backward<'a>(
         &self,
         grad: &'a Array<T, D>,
-        left_ref: &'a VariableRef<T, D, Dl, Dr>,
-        right_ref: &'a VariableRef<T, D, Dl, Dr>,
+        left_ref: &'a VariableRef<T, D>,
+        right_ref: &'a VariableRef<T, D>,
     ) -> [Array<T, D>; 2];
 
     fn subscribe<'a, 'b>(
         &self,
-        lhs: &'a VariableRef<T, D, Dl, Dr>,
-        rhs: &'b VariableRef<T, D, Dl, Dr>,
-        module_box: Box<dyn Module<T, D, Dl, Dr>>,
-    ) -> VariableRef<T, D, Dl, Dr> {
-        Variable::<T, D, Dl, Dr>::new_node(
+        lhs: &'a VariableRef<T, D>,
+        rhs: &'b VariableRef<T, D>,
+        module_box: Box<dyn Module<T, D>>,
+    ) -> VariableRef<T, D> {
+        Variable::<T, D>::new_node(
             self.forward(&lhs.borrow().data, &rhs.borrow().data),
             Some(lhs.clone()),
             Some(rhs.clone()),
@@ -175,35 +141,21 @@ where
 
 //**************************** BACKWARD *********************
 
-impl<T, D, Dl, Dr> Variable<T, D, Dl, Dr>
+impl<T, D> Variable<T, D>
 where
     T: NdFloat,
     D: Dimension,
-    Dl: Dimension,
-    Dr: Dimension,
 {
     pub fn is_leaf(&self) -> bool {
         self.right_root.is_none() & self.left_root.is_none()
     }
+}
 
-    pub fn requires_grad(&self) -> bool {
-        match self.grad {
-            Some(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn get_grad(&self) -> Result<Array<T, D>, &str> {
-        match &self.grad {
-            Some(grad) => Ok(grad.clone()),
-            None => Err("This variable does not requires grad"),
-        }
-    }
-
-    pub fn get_grad_f(&self) -> Array<T, D> {
-        self.get_grad().unwrap()
-    }
-
+impl<T, D> Variable<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
     pub fn backward_module<'a>(&mut self, grad: Array<T, D>) {
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
@@ -213,24 +165,12 @@ where
                     // call the borrow_mut in two different scopes so that when left and right left_root target the same variable it does not throw a BorrowMutError
                     {
                         let mut left_var = left_ref.borrow_mut();
-
-                        match &mut left_var.grad {
-                            Some(grad) => {
-                                *grad += &grads_to_add[0];
-                            }
-                            _ => (),
-                        }
+                        left_var.grad += &grads_to_add[0];
                     }
 
                     {
                         let mut right_var = right_ref.borrow_mut();
-
-                        match &mut right_var.grad {
-                            Some(grad) => {
-                                *grad += &grads_to_add[1];
-                            }
-                            _ => (),
-                        }
+                        right_var.grad += &grads_to_add[1];
                     }
                 }
                 (_, None) => (),
@@ -239,21 +179,23 @@ where
             None => (),
         }
     }
+}
 
+impl<T, D> Variable<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
     pub fn backward(&mut self) {
         self.backward_in(true);
     }
 
     fn backward_in(&mut self, root: bool) {
-        let grad: Array<T, D>;
-        match root {
-            true => {
-                grad = Array::<T, D>::ones(self.data.raw_dim());
-            }
-            false => {
-                grad = self.get_grad().unwrap();
-            }
-        }
+        let grad = match root {
+            true => Array::<T, D>::ones(self.grad.raw_dim()),
+            false => self.grad.clone(),
+        };
+
         self.backward_module(grad);
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {

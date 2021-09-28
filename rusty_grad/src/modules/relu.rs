@@ -5,7 +5,7 @@ use crate::variable::VariableRef;
 
 pub struct Relu {}
 
-impl<T, D> Module<T, D, D, D> for Relu
+impl<T, D> Module<T, D> for Relu
 where
     T: NdFloat,
     D: Dimension,
@@ -17,8 +17,8 @@ where
     fn backward<'a>(
         &self,
         grad: &'a Array<T, D>,
-        left_ref: &'a VariableRef<T, D, D, D>,
-        _right_ref: &'a VariableRef<T, D, D, D>,
+        left_ref: &'a VariableRef<T, D>,
+        _right_ref: &'a VariableRef<T, D>,
     ) -> [Array<T, D>; 2] {
         let mut grad = grad.clone();
         let ref data = left_ref.borrow().data;
@@ -33,12 +33,12 @@ where
     }
 }
 
-impl<T, D> VariableRef<T, D, D, D>
+impl<T, D> VariableRef<T, D>
 where
     T: NdFloat,
     D: Dimension,
 {
-    pub fn relu(&mut self) -> VariableRef<T, D, D, D> {
+    fn relu(&mut self) -> VariableRef<T, D> {
         let module = Relu {};
         module.subscribe(self, self, Box::new(Relu {}))
     }
@@ -66,7 +66,7 @@ mod tests {
         let mut x = Variable::new(array!([2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().get_grad_f(), array!([1.0]));
+        assert_eq!(x.borrow().grad, array!([1.0]));
     }
 
     #[test]
@@ -74,6 +74,6 @@ mod tests {
         let mut x = Variable::new(array!([-2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().get_grad_f(), array!([0.0]));
+        assert_eq!(x.borrow().grad, array!([0.0]));
     }
 }
