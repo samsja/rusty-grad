@@ -196,7 +196,7 @@ where
 
                         match &mut right_var.grad {
                             Some(grad) => {
-                                *grad += &grads_to_add[0];
+                                *grad += &grads_to_add[1];
                             }
                             _ => (),
                         }
@@ -216,16 +216,24 @@ where
     D: Dimension,
 {
     pub fn backward(&mut self) {
-        self.backward_in();
+        self.backward_in(true);
     }
 
-    fn backward_in(&mut self) {
-        let grad = self.get_grad();
+    fn backward_in(&mut self, root: bool) {
+        let grad: Array<T, D>;
+        match root {
+            true => {
+                grad = Array::<T, D>::ones(self.data.raw_dim());
+            }
+            false => {
+                grad = self.get_grad();
+            }
+        }
         self.backward_module(grad);
 
         for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
             match some_var {
-                Some(var) => var.borrow_mut().backward_in(),
+                Some(var) => var.borrow_mut().backward_in(false),
                 None => (),
             }
         }
