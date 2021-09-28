@@ -1,35 +1,44 @@
+use ndarray::{Array, Dimension, NdFloat, Zip};
+
 use crate::variable::Module;
 use crate::variable::VariableRef;
 
 pub struct Relu {}
 
-impl Module for Relu {
-    fn forward(&self, x: f32, _y: f32) -> f32 {
-        if x > 0.0 {
-            x
-        } else {
-            0.0
-        }
+impl<T, D> Module<T, D> for Relu
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    fn forward<'a, 'b>(&self, x: &'a Array<T, D>, _y: &'b Array<T, D>) -> Array<T, D> {
+        x.mapv(|a| a.max(T::zero()))
     }
 
     fn backward<'a>(
         &self,
-        grad: &'a f32,
-        left_ref: &'a VariableRef,
-        _right_ref: &'a VariableRef,
-    ) -> [f32; 2] {
-        let left_var = left_ref.borrow();
+        grad: &'a Array<T, D>,
+        left_ref: &'a VariableRef<T, D>,
+        _right_ref: &'a VariableRef<T, D>,
+    ) -> [Array<T, D>; 2] {
+        let mut grad = grad.clone();
+        let ref data = left_ref.borrow().data;
 
-        if left_var.data > 0.0 {
-            [*grad, 0.0]
-        } else {
-            [0.0, 0.0]
-        }
+        Zip::from(&mut grad).and(data).for_each(|g, &d| {
+            *g = if d.is_sign_positive() { *g } else { T::zero() };
+        });
+
+        let zero = Array::<T, D>::zeros(grad.raw_dim());
+
+        [grad, zero]
     }
 }
 
-impl VariableRef {
-    fn relu(&mut self) -> VariableRef {
+impl<T, D> VariableRef<T, D>
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    fn relu(&mut self) -> VariableRef<T, D> {
         let module = Relu {};
         module.subscribe(self, self, Box::new(Relu {}))
     }
@@ -39,31 +48,32 @@ impl VariableRef {
 mod tests {
 
     use crate::variable::Variable;
+    use ndarray::array;
 
     #[test]
     fn check_method() {
-        let mut x = Variable::new(2.0);
+        let mut x = Variable::new(array!([2.0]));
 
-        assert_eq!(x.relu().borrow().data, 2.0);
+        assert_eq!(x.relu().borrow().data, array!([2.0]));
 
-        let mut y = Variable::new(-10.0);
+        let mut y = Variable::new(array!([-10.0]));
 
-        assert_eq!(y.relu().borrow().data, 0.0);
+        assert_eq!(y.relu().borrow().data, array!([0.0]));
     }
 
     #[test]
     fn check_backward_positive() {
-        let mut x = Variable::new(2.0);
+        let mut x = Variable::new(array!([2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().grad, 1.0);
+        assert_eq!(x.borrow().grad, array!([1.0]));
     }
 
     #[test]
     fn check_backward_negative() {
-        let mut x = Variable::new(-2.0);
+        let mut x = Variable::new(array!([-2.0]));
         let mut z = x.relu();
         z.backward();
-        assert_eq!(x.borrow().grad, 0.0);
+        assert_eq!(x.borrow().grad, array!([0.0]));
     }
 }
