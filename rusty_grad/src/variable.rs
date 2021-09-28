@@ -25,16 +25,21 @@ where
     T: NdFloat,
     D: Dimension,
 {
-    pub fn new_node(
+    fn new_node_i(
         data: Array<T, D>,
         left_root: Option<VariableRef<T, D>>,
         right_root: Option<VariableRef<T, D>>,
         module: Option<Box<dyn Module<T, D>>>,
+        requires_grad: bool,
     ) -> VariableRef<T, D> {
-        let grad_zero = Array::<T, D>::zeros(data.raw_dim());
+        let grad = match requires_grad {
+            true => Some(Array::<T, D>::zeros(data.raw_dim())),
+            false => None,
+        };
+
         let var = Variable {
             data,
-            grad: Some(grad_zero),
+            grad,
             left_root,
             right_root,
             module,
@@ -42,9 +47,21 @@ where
 
         VariableRef::new(var)
     }
+    fn new_node(
+        data: Array<T, D>,
+        left_root: Option<VariableRef<T, D>>,
+        right_root: Option<VariableRef<T, D>>,
+        module: Option<Box<dyn Module<T, D>>>,
+    ) -> VariableRef<T, D> {
+        Variable::new_node_i(data, left_root, right_root, module, true)
+    }
 
     pub fn new(data: Array<T, D>) -> VariableRef<T, D> {
-        Variable::new_node(data, None, None, None)
+        Variable::new_node_i(data, None, None, None, true)
+    }
+
+    pub fn new_no_grad(data: Array<T, D>) -> VariableRef<T, D> {
+        Variable::new_node_i(data, None, None, None, false)
     }
 }
 
