@@ -1,6 +1,6 @@
 [package]
 name = "rusty_grad"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["sami jaghouar <sami.jaghouar@hotmail.fr>"]
 edition = "2018"
 
