@@ -88,13 +88,13 @@ where
         left_ref: &'a VariableRef<T, D>,
         right_ref: &'a VariableRef<T, D>,
     ) -> [Array<T, D>; 2] {
-        let left_var = left_ref.borrow();
-        let right_var = right_ref.borrow();
+        let left_data = left_ref.borrow().data.clone();
+        let right_data = right_ref.borrow().data.clone();
 
         [
-            grad / right_var.data.clone(),
-            (grad / left_var.data.clone()),
-        ] // TODO should be minus
+            grad / right_data.clone(),
+            -(grad * left_data) / (right_data.mapv(|a| a.powi(2))),
+        ]
     }
 }
 
@@ -210,7 +210,7 @@ mod tests {
         let ref x = Variable::new(array!([2.0]));
         let ref y = Variable::new(array!([3.0]));
 
-        let mut z = x * y;
+        let mut z = x / y;
 
         z.backward();
 
