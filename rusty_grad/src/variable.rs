@@ -5,35 +5,34 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::rc::Rc;
 
-use ndarray::{Array, Dimension, NdFloat};
+use ndarray::IxDyn;
+use ndarray::{Array, NdFloat};
 
-pub struct Variable<T, D>
+pub struct Variable<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
-    pub data: Array<T, D>,
-    pub grad: Option<Array<T, D>>,
-    pub left_root: Option<VariableRef<T, D>>,
-    pub right_root: Option<VariableRef<T, D>>,
-    pub module: Option<Box<dyn Module<T, D>>>,
+    pub data: Array<T, IxDyn>,
+    pub grad: Option<Array<T, IxDyn>>,
+    pub left_root: Option<VariableRef<T>>,
+    pub right_root: Option<VariableRef<T>>,
+    pub module: Option<Box<dyn Module<T>>>,
 }
 
 // ********************** INIT **********************************
-impl<T, D> Variable<T, D>
+impl<T> Variable<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
     fn new_node_i(
-        data: Array<T, D>,
-        left_root: Option<VariableRef<T, D>>,
-        right_root: Option<VariableRef<T, D>>,
-        module: Option<Box<dyn Module<T, D>>>,
+        data: Array<T, IxDyn>,
+        left_root: Option<VariableRef<T>>,
+        right_root: Option<VariableRef<T>>,
+        module: Option<Box<dyn Module<T>>>,
         requires_grad: bool,
-    ) -> VariableRef<T, D> {
+    ) -> VariableRef<T> {
         let grad = match requires_grad {
-            true => Some(Array::<T, D>::zeros(data.raw_dim())),
+            true => Some(Array::<T, IxDyn>::zeros(data.raw_dim())),
             false => None,
         };
 
@@ -48,48 +47,46 @@ where
         VariableRef::new(var)
     }
     fn new_node(
-        data: Array<T, D>,
-        left_root: Option<VariableRef<T, D>>,
-        right_root: Option<VariableRef<T, D>>,
-        module: Option<Box<dyn Module<T, D>>>,
-    ) -> VariableRef<T, D> {
+        data: Array<T, IxDyn>,
+        left_root: Option<VariableRef<T>>,
+        right_root: Option<VariableRef<T>>,
+        module: Option<Box<dyn Module<T>>>,
+    ) -> VariableRef<T> {
         Variable::new_node_i(data, left_root, right_root, module, true)
     }
 
-    pub fn new(data: Array<T, D>) -> VariableRef<T, D> {
+    pub fn new(data: Array<T, IxDyn>) -> VariableRef<T> {
         Variable::new_node_i(data, None, None, None, true)
     }
 
-    pub fn new_no_grad(data: Array<T, D>) -> VariableRef<T, D> {
+    pub fn new_no_grad(data: Array<T, IxDyn>) -> VariableRef<T> {
         Variable::new_node_i(data, None, None, None, false)
     }
 }
 
 #[derive(Clone)]
-pub struct VariableRef<T, D>
+pub struct VariableRef<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
-    ref_: Rc<RefCell<Variable<T, D>>>,
+    ref_: Rc<RefCell<Variable<T>>>,
 }
 
-impl<T, D> VariableRef<T, D>
+impl<T> VariableRef<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
-    pub fn new(var: Variable<T, D>) -> VariableRef<T, D> {
+    pub fn new(var: Variable<T>) -> VariableRef<T> {
         VariableRef {
             ref_: Rc::new(RefCell::new(var)),
         }
     }
 
-    pub fn borrow(&self) -> Ref<Variable<T, D>> {
+    pub fn borrow(&self) -> Ref<Variable<T>> {
         self.ref_.borrow()
     }
 
-    pub fn borrow_mut(&mut self) -> RefMut<Variable<T, D>> {
+    pub fn borrow_mut(&mut self) -> RefMut<Variable<T>> {
         self.ref_.borrow_mut()
     }
 
@@ -99,10 +96,9 @@ where
 }
 
 // *********************** DISPLAY ***********************
-impl<T, D> fmt::Display for Variable<T, D>
+impl<T> fmt::Display for Variable<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.grad {
@@ -112,10 +108,9 @@ where
     }
 }
 
-impl<T, D> fmt::Display for VariableRef<T, D>
+impl<T> fmt::Display for VariableRef<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.borrow())
@@ -124,27 +119,26 @@ where
 
 // ****************************MODULE***********************
 
-pub trait Module<T, D>
+pub trait Module<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
-    fn forward<'a, 'b>(&self, x: &'a Array<T, D>, y: &'b Array<T, D>) -> Array<T, D>;
+    fn forward<'a, 'b>(&self, x: &'a Array<T, IxDyn>, y: &'b Array<T, IxDyn>) -> Array<T, IxDyn>;
 
     fn backward<'a>(
         &self,
-        grad: &'a Array<T, D>,
-        left_ref: &'a VariableRef<T, D>,
-        right_ref: &'a VariableRef<T, D>,
-    ) -> [Array<T, D>; 2];
+        grad: &'a Array<T, IxDyn>,
+        left_ref: &'a VariableRef<T>,
+        right_ref: &'a VariableRef<T>,
+    ) -> [Array<T, IxDyn>; 2];
 
     fn subscribe<'a, 'b>(
         &self,
-        lhs: &'a VariableRef<T, D>,
-        rhs: &'b VariableRef<T, D>,
-        module_box: Box<dyn Module<T, D>>,
-    ) -> VariableRef<T, D> {
-        Variable::<T, D>::new_node(
+        lhs: &'a VariableRef<T>,
+        rhs: &'b VariableRef<T>,
+        module_box: Box<dyn Module<T>>,
+    ) -> VariableRef<T> {
+        Variable::<T>::new_node(
             self.forward(&lhs.borrow().data, &rhs.borrow().data),
             Some(lhs.clone()),
             Some(rhs.clone()),
@@ -155,10 +149,9 @@ where
 
 //**************************** BACKWARD *********************
 
-impl<T, D> Variable<T, D>
+impl<T> Variable<T>
 where
     T: NdFloat,
-    D: Dimension,
 {
     pub fn is_leaf(&self) -> bool {
         self.right_root.is_none() & self.left_root.is_none()
@@ -171,18 +164,18 @@ where
         }
     }
 
-    pub fn get_grad(&self) -> Result<Array<T, D>, &str> {
+    pub fn get_grad(&self) -> Result<Array<T, IxDyn>, &str> {
         match &self.grad {
             Some(grad) => Ok(grad.clone()),
             None => Err("This variable does not requires grad"),
         }
     }
 
-    pub fn get_grad_f(&self) -> Array<T, D> {
+    pub fn get_grad_f(&self) -> Array<T, IxDyn> {
         self.get_grad().unwrap()
     }
 
-    pub fn backward_module<'a>(&mut self, grad: Array<T, D>) {
+    pub fn backward_module<'a>(&mut self, grad: Array<T, IxDyn>) {
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
                 (Some(left_ref), Some(right_ref)) => {
@@ -223,10 +216,10 @@ where
     }
 
     fn backward_in(&mut self, root: bool) {
-        let grad: Array<T, D>;
+        let grad: Array<T, IxDyn>;
         match root {
             true => {
-                grad = Array::<T, D>::ones(self.data.raw_dim());
+                grad = Array::<T, IxDyn>::ones(self.data.raw_dim());
             }
             false => {
                 grad = self.get_grad().unwrap();
@@ -251,14 +244,14 @@ mod tests {
     use ndarray::array;
     #[test]
     fn new_is_leaf() {
-        let x = Variable::new(array!([1.0]));
+        let x = Variable::new(array!([1.0]).into_dyn());
         assert_eq!(true, x.borrow().is_leaf());
     }
 
     #[test]
     fn new_node_is_not_leaf() {
-        let ref x = Variable::new(array!([2.0]));
-        let ref y = Variable::new(array!([2.0]));
+        let ref x = Variable::new(array!([2.0]).into_dyn());
+        let ref y = Variable::new(array!([2.0]).into_dyn());
 
         assert_eq!(false, (x + y).borrow().is_leaf());
     }
