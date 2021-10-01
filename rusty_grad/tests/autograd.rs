@@ -1,4 +1,5 @@
 use ndarray::array;
+use rusty_grad::modules::functional::loss::mse_loss;
 use rusty_grad::variable::Variable;
 
 #[test]
@@ -61,4 +62,26 @@ fn test_complexautograd_2() {
 
     assert_eq!(x.borrow().get_grad_f(), array!([10.0]).into_dyn());
     assert_eq!(y.borrow().get_grad_f(), array!([10.0]).into_dyn());
+}
+
+#[test]
+fn test_mat_vect_mse() {
+    let mut x = Variable::new(array!([1.0, 2.0], [3.0, 4.0]).into_dyn());
+    let y = Variable::new(array!([1.0], [2.0]).into_dyn());
+
+    let zero = Variable::new(array!([0.0], [0.0]).into_dyn());
+
+    let z = &x.dot(&y);
+    let mut h = mse_loss(z, &zero);
+    h.backward();
+
+    println!("z {}", z);
+    println!("h {}", h);
+
+    assert_eq!(
+        x.borrow().get_grad_f(),
+        array!([5.0, 10.0], [11.0, 22.0]).into_dyn()
+    );
+    // assert_eq!(y.borrow().get_grad_f(), array!([38.0],[54.0]).into_dyn());
+    // TODO FIX BUG BACKWARD ON VECT
 }

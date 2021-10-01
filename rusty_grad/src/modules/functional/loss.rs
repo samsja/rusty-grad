@@ -31,9 +31,9 @@ where
         let ref y = right_ref.borrow().data;
 
         let len = T::from_usize(x.len()).unwrap();
-        let mut new_grad = ((y - x) / len) * 2.0;
+        let mut new_grad = ((x - y) / len) * 2.0;
         new_grad = new_grad * grad;
-        [new_grad.clone(), new_grad]
+        [new_grad.clone(), -new_grad]
     }
 }
 
@@ -59,7 +59,6 @@ mod tests {
 
         let z = mse_loss(&x, &y);
 
-        println!("{}", x.borrow().data.sum());
         assert_eq!(z.borrow().data, array!(2.5).into_dyn());
     }
 
@@ -79,16 +78,25 @@ mod tests {
 
         let mut z = mse_loss(&x, &y);
 
-        println!("{}", array!([1.0]) * 2.0);
-
         z.backward();
         assert_eq!(
             x.borrow().get_grad_f(),
-            array!([-0.5, -2.0], [0.0, 0.5]).into_dyn()
+            array!([0.5, 2.0], [0.0, -0.5]).into_dyn()
         );
         assert_eq!(
             y.borrow().get_grad_f(),
             array!([-0.5, -2.0], [0.0, 0.5]).into_dyn()
         );
+    }
+
+    #[test]
+    fn mse_check_backward_vect() {
+        let x = Variable::new(array!([5.0], [11.0]).into_dyn());
+        let y = Variable::new(array!([0.0], [0.0]).into_dyn());
+
+        let mut z = mse_loss(&x, &y);
+
+        z.backward();
+        assert_eq!(x.borrow().get_grad_f(), array!([5.0], [11.0]).into_dyn());
     }
 }

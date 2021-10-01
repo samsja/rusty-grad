@@ -100,8 +100,6 @@ mod tests {
         let mut x = Variable::new(array!([1.0, 2.0], [3.0, 4.0]).into_dyn());
         let y = Variable::new(array!([1.0], [2.0]).into_dyn());
 
-        let _grad = array!([2.0], [2.0]).into_dyn();
-
         let mut z = x.dot(&y);
 
         z.backward();
