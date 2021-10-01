@@ -6,7 +6,7 @@ use std::cell::RefMut;
 use std::rc::Rc;
 
 use ndarray::IxDyn;
-use ndarray::{Array, NdFloat};
+use ndarray::{Array, Ix1, NdFloat};
 
 pub struct Variable<T>
 where
@@ -29,10 +29,10 @@ where
         left_root: Option<VariableRef<T>>,
         right_root: Option<VariableRef<T>>,
         module: Option<Box<dyn Module<T>>>,
-        requires_grad: bool,
+        retain_grad: bool,
     ) -> VariableRef<T> {
-        let grad = match requires_grad {
-            true => Some(Array::<T, IxDyn>::zeros(data.raw_dim())),
+        let grad = match retain_grad {
+            true => Some(Variable::init_grad_value(&data)),
             false => None,
         };
 
@@ -52,15 +52,19 @@ where
         right_root: Option<VariableRef<T>>,
         module: Option<Box<dyn Module<T>>>,
     ) -> VariableRef<T> {
-        Variable::new_node_i(data, left_root, right_root, module, true)
+        Variable::new_node_i(data, left_root, right_root, module, false)
     }
 
     pub fn new(data: Array<T, IxDyn>) -> VariableRef<T> {
         Variable::new_node_i(data, None, None, None, true)
     }
 
-    pub fn new_no_grad(data: Array<T, IxDyn>) -> VariableRef<T> {
+    pub fn new_no_retain_grad(data: Array<T, IxDyn>) -> VariableRef<T> {
         Variable::new_node_i(data, None, None, None, false)
+    }
+
+    pub fn init_grad_value(data: &Array<T, IxDyn>) -> Array<T, IxDyn> {
+        Array::<T, IxDyn>::zeros(data.raw_dim())
     }
 }
 
@@ -157,11 +161,15 @@ where
         self.right_root.is_none() & self.left_root.is_none()
     }
 
-    pub fn requires_grad(&self) -> bool {
+    pub fn is_grad_retain(&self) -> bool {
         match self.grad {
             Some(_) => true,
             _ => false,
         }
+    }
+
+    pub fn retain_grad(&mut self) {
+        self.grad = Some(Variable::init_grad_value(&self.data));
     }
 
     pub fn get_grad(&self) -> Result<Array<T, IxDyn>, &str> {
@@ -175,11 +183,16 @@ where
         self.get_grad().unwrap()
     }
 
-    pub fn backward_module<'a>(&mut self, grad: Array<T, IxDyn>) {
+    pub fn backward_module<'a>(&mut self, grad: &Array<T, IxDyn>) -> [Array<T, IxDyn>; 2] {
+        let mut grads_to_add: [Array<T, IxDyn>; 2] = [
+            Array::<T, Ix1>::zeros(1).into_dyn(),
+            Array::<T, Ix1>::zeros(1).into_dyn(),
+        ];
+
         match &self.module {
             Some(module) => match (&mut self.left_root, &mut self.right_root) {
                 (Some(left_ref), Some(right_ref)) => {
-                    let grads_to_add = module.backward(&grad, left_ref, right_ref);
+                    grads_to_add = module.backward(&grad, left_ref, right_ref);
 
                     // call the borrow_mut in two different scopes so that when left and right left_root target the same variable it does not throw a BorrowMutError
                     {
@@ -209,27 +222,22 @@ where
             },
             None => (),
         }
+        grads_to_add
     }
 
     pub fn backward(&mut self) {
-        self.backward_in(true);
+        self.backward_in(&Array::<T, IxDyn>::ones(self.data.raw_dim()));
     }
 
-    fn backward_in(&mut self, root: bool) {
-        let grad: Array<T, IxDyn>;
-        match root {
-            true => {
-                grad = Array::<T, IxDyn>::ones(self.data.raw_dim());
-            }
-            false => {
-                grad = self.get_grad().unwrap();
-            }
-        }
-        self.backward_module(grad);
+    fn backward_in(&mut self, grad: &Array<T, IxDyn>) {
+        let new_grad = self.backward_module(grad);
 
-        for some_var in vec![&mut self.left_root, &mut self.right_root].iter_mut() {
+        for (i, some_var) in vec![&mut self.left_root, &mut self.right_root]
+            .iter_mut()
+            .enumerate()
+        {
             match some_var {
-                Some(var) => var.borrow_mut().backward_in(false),
+                Some(var) => var.borrow_mut().backward_in(&new_grad[i]),
                 None => (),
             }
         }
@@ -246,6 +254,7 @@ mod tests {
     fn new_is_leaf() {
         let x = Variable::new(array!([1.0]).into_dyn());
         assert_eq!(true, x.borrow().is_leaf());
+        assert_eq!(true, x.borrow().is_grad_retain());
     }
 
     #[test]
@@ -253,6 +262,8 @@ mod tests {
         let ref x = Variable::new(array!([2.0]).into_dyn());
         let ref y = Variable::new(array!([2.0]).into_dyn());
 
-        assert_eq!(false, (x + y).borrow().is_leaf());
+        let z = x + y;
+        assert_eq!(false, z.borrow().is_leaf());
+        assert_eq!(false, z.borrow().is_grad_retain());
     }
 }
