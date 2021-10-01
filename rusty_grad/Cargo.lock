@@ -67,4 +67,5 @@ name = "rusty_grad"
 version = "0.2.0"
 dependencies = [
  "ndarray",
+ "num-traits",
 ]
