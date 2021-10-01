@@ -21,7 +21,6 @@ where
         _left_ref: &'a VariableRef<T>,
         _right_ref: &'a VariableRef<T>,
     ) -> [Array<T, IxDyn>; 2] {
-        println!("{}", grad);
         [grad.clone(), grad.clone()]
     }
 }

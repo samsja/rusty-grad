@@ -117,7 +117,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.grad {
             Some(grad) => write!(f, "Variable( {} grad : {})", self.data, grad),
-            _ => write!(f, "Variable( {} , no grad required)", self.data),
+            _ => write!(f, "Variable({})", self.data),
         }
     }
 }
