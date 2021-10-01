@@ -110,6 +110,42 @@ macro_rules! impl_binary_op {
             }
         }
 
+        impl<'a, 'b, T> ops::$trt<&'b mut VariableRef<T>> for &'a VariableRef<T>
+        where
+            T: NdFloat,
+        {
+            type Output = VariableRef<T>;
+
+            fn $mth(self, rhs: &'b mut VariableRef<T>) -> VariableRef<T> {
+                let module = $trt {};
+                module.subscribe(self, rhs, Box::new($trt {}))
+            }
+        }
+
+        impl<'a, 'b, T> ops::$trt<&'b VariableRef<T>> for &'a mut VariableRef<T>
+        where
+            T: NdFloat,
+        {
+            type Output = VariableRef<T>;
+
+            fn $mth(self, rhs: &'b VariableRef<T>) -> VariableRef<T> {
+                let module = $trt {};
+                module.subscribe(self, rhs, Box::new($trt {}))
+            }
+        }
+
+        impl<'a, 'b, T> ops::$trt<&'b mut VariableRef<T>> for &'a mut VariableRef<T>
+        where
+            T: NdFloat,
+        {
+            type Output = VariableRef<T>;
+
+            fn $mth(self, rhs: &'b mut VariableRef<T>) -> VariableRef<T> {
+                let module = $trt {};
+                module.subscribe(self, rhs, Box::new($trt {}))
+            }
+        }
+
         impl<'a, T> ops::$trt<&'a VariableRef<T>> for VariableRef<T>
         where
             T: NdFloat,

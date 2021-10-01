@@ -66,6 +66,16 @@ where
     pub fn init_grad_value(data: &Array<T, IxDyn>) -> Array<T, IxDyn> {
         Array::<T, IxDyn>::zeros(data.raw_dim())
     }
+
+    pub fn zero_grad(&mut self) {
+        if self.is_grad_retain() {
+            self.grad = Some(Variable::init_grad_value(&self.data));
+        } else {
+            println!(
+                "WARNING : zero grad on a Variable which does not retain its grad has no effect"
+            );
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -265,5 +275,17 @@ mod tests {
         let z = x + y;
         assert_eq!(false, z.borrow().is_leaf());
         assert_eq!(false, z.borrow().is_grad_retain());
+    }
+
+    #[test]
+    fn zero_grad() {
+        let ref mut x = Variable::new(array!([2.0]).into_dyn());
+        let ref mut y = Variable::new(array!([2.0]).into_dyn());
+
+        let mut z = &x.clone() + y;
+        z.backward();
+        x.borrow_mut().zero_grad();
+
+        assert_eq!(x.borrow().get_grad().unwrap(), array!([0.0]).into_dyn());
     }
 }
