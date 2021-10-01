@@ -1,5 +1,6 @@
 use ndarray::{stack, ArrayView, Axis};
-use ndarray::{Array, Ix1, Ix2, IxDyn, NdFloat};
+use ndarray::{Array, Ix2, IxDyn, NdFloat};
+use ndarray::{Dimension, RemoveAxis, ShapeError};
 
 use crate::variable::Module;
 use crate::variable::VariableRef;
@@ -46,14 +47,13 @@ impl Dot {
         y: &Array<T, Ix2>,
     ) -> [Array<T, Ix2>; 2] {
         let grad_x = y.sum_axis(Axis(1));
-        let l: Vec<ArrayView<_, Ix1>> = (0..x.shape()[1]).map(|_| grad_x.view()).collect();
-        let grad_x = stack(Axis(0), &l).unwrap();
+
+        let grad_x = repeat(Axis(0), &grad_x, x.shape()[1]).unwrap();
 
         let grad_y = x.sum_axis(Axis(0));
-        let l: Vec<ArrayView<_, Ix1>> = (0..y.shape()[1]).map(|_| grad_y.view()).collect();
         let ax = if y.shape()[1] == 1 { 1 } else { 0 };
 
-        let grad_y = stack(Axis(ax), &l).unwrap();
+        let grad_y = repeat(Axis(ax), &grad_y, y.shape()[1]).unwrap();
 
         [grad * grad_x, grad * grad_y]
     }
@@ -67,6 +67,16 @@ where
         let module = Dot {};
         module.subscribe(self, other, Box::new(Dot {}))
     }
+}
+
+pub fn repeat<T, D>(ax: Axis, x: &Array<T, D>, n: usize) -> Result<Array<T, D::Larger>, ShapeError>
+where
+    T: NdFloat,
+    D: Dimension,
+    D::Larger: RemoveAxis,
+{
+    let l: Vec<ArrayView<T, D>> = (0..n).map(|_| x.view()).collect();
+    stack(ax, &l)
 }
 
 #[cfg(test)]
