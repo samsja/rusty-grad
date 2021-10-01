@@ -82,6 +82,5 @@ fn test_mat_vect_mse() {
         x.borrow().get_grad_f(),
         array!([5.0, 10.0], [11.0, 22.0]).into_dyn()
     );
-    // assert_eq!(y.borrow().get_grad_f(), array!([38.0],[54.0]).into_dyn());
-    // TODO FIX BUG BACKWARD ON VECT
+    assert_eq!(y.borrow().get_grad_f(), array!([38.0], [54.0]).into_dyn());
 }

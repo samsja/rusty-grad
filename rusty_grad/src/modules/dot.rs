@@ -35,7 +35,6 @@ where
         let grad_view = grad.view();
         let [grad_x, grad_y] =
             Dot::backward_ix2(&grad_view.into_dimensionality::<Ix2>().unwrap(), &x, &y);
-
         [grad_x.into_dyn(), grad_y.into_dyn()]
     }
 }
@@ -47,15 +46,13 @@ impl Dot {
         y: &Array<T, Ix2>,
     ) -> [Array<T, Ix2>; 2] {
         let grad_x = y.sum_axis(Axis(1));
+        let grad_x = repeat(Axis(0), &grad_x, x.shape()[0]).unwrap();
 
-        let grad_x = repeat(Axis(0), &grad_x, x.shape()[1]).unwrap();
-
-        let grad_y = x.sum_axis(Axis(0));
+        let grad_y = (x * grad).sum_axis(Axis(0));
         let ax = if y.shape()[1] == 1 { 1 } else { 0 };
-
         let grad_y = repeat(Axis(ax), &grad_y, y.shape()[1]).unwrap();
 
-        [grad * grad_x, grad * grad_y]
+        [grad * grad_x, grad_y]
     }
 }
 
@@ -126,5 +123,19 @@ mod tests {
             y.borrow().get_grad_f(),
             array!([4.0, 6.0], [4.0, 6.0]).into_dyn()
         );
+    }
+
+    #[test]
+    fn dot_check_backward_3_2() {
+        let mut x = Variable::new(array!([1.0, 2.0, 3.0], [4.0, 5.0, 6.0]).into_dyn());
+        let y = Variable::new(array!([1.0], [1.0], [1.0]).into_dyn());
+
+        let mut z = x.dot(&y);
+
+        z.backward();
+        /*         assert_eq!( */
+        // y.borrow().get_grad_f(),
+        // array!([4.0, 6.0], [4.0, 6.0]).into_dyn()
+        /* ); */
     }
 }
