@@ -1,5 +1,5 @@
 use ndarray::array;
-use rusty_grad::modules::functional::loss::mse_loss;
+use rusty_grad::grad_fn::functional::loss::mse_loss;
 use rusty_grad::variable::Variable;
 
 #[test]

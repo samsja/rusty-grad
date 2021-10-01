@@ -2,12 +2,12 @@ use ndarray::{Array, Ix1, IxDyn, NdFloat, Zip};
 use num_traits::FromPrimitive;
 use std::ops::Mul;
 
-use crate::variable::Module;
+use crate::variable::GradFn;
 use crate::variable::VariableRef;
 
 pub struct MSEloss {}
 
-impl<T> Module<T> for MSEloss
+impl<T> GradFn<T> for MSEloss
 where
     T: NdFloat + FromPrimitive + Mul<f32, Output = T>,
 {
@@ -41,8 +41,8 @@ pub fn mse_loss<T: NdFloat + FromPrimitive + Mul<f32, Output = T>>(
     x: &VariableRef<T>,
     y: &VariableRef<T>,
 ) -> VariableRef<T> {
-    let module = MSEloss {};
-    module.subscribe(x, y, Box::new(MSEloss {}))
+    let grad_fn = MSEloss {};
+    grad_fn.subscribe(x, y, Box::new(MSEloss {}))
 }
 
 #[cfg(test)]

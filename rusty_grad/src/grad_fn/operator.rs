@@ -2,12 +2,12 @@ use std::ops;
 
 use ndarray::{Array, IxDyn, NdFloat};
 
-use crate::variable::Module;
+use crate::variable::GradFn;
 use crate::variable::VariableRef;
 
 pub struct Add {}
 
-impl<T> Module<T> for Add
+impl<T> GradFn<T> for Add
 where
     T: NdFloat,
 {
@@ -28,7 +28,7 @@ where
 
 pub struct Sub {}
 
-impl<T> Module<T> for Sub
+impl<T> GradFn<T> for Sub
 where
     T: NdFloat,
 {
@@ -48,7 +48,7 @@ where
 
 pub struct Mul {}
 
-impl<T> Module<T> for Mul
+impl<T> GradFn<T> for Mul
 where
     T: NdFloat,
 {
@@ -71,7 +71,7 @@ where
 
 pub struct Div {}
 
-impl<T> Module<T> for Div
+impl<T> GradFn<T> for Div
 where
     T: NdFloat,
 {
@@ -105,8 +105,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: &'b VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(self, rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(self, rhs, Box::new($trt {}))
             }
         }
 
@@ -117,8 +117,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: &'b mut VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(self, rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(self, rhs, Box::new($trt {}))
             }
         }
 
@@ -129,8 +129,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: &'b VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(self, rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(self, rhs, Box::new($trt {}))
             }
         }
 
@@ -141,8 +141,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: &'b mut VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(self, rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(self, rhs, Box::new($trt {}))
             }
         }
 
@@ -153,8 +153,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: &'a VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(&self, rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(&self, rhs, Box::new($trt {}))
             }
         }
 
@@ -165,8 +165,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(self, &rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(self, &rhs, Box::new($trt {}))
             }
         }
 
@@ -177,8 +177,8 @@ macro_rules! impl_binary_op {
             type Output = VariableRef<T>;
 
             fn $mth(self, rhs: VariableRef<T>) -> VariableRef<T> {
-                let module = $trt {};
-                module.subscribe(&self, &rhs, Box::new($trt {}))
+                let grad_fn = $trt {};
+                grad_fn.subscribe(&self, &rhs, Box::new($trt {}))
             }
         }
     };

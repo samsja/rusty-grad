@@ -1,11 +1,11 @@
 use ndarray::{Array, IxDyn, NdFloat, Zip};
 
-use crate::variable::Module;
+use crate::variable::GradFn;
 use crate::variable::VariableRef;
 
 pub struct Relu {}
 
-impl<T> Module<T> for Relu
+impl<T> GradFn<T> for Relu
 where
     T: NdFloat,
 {
@@ -37,8 +37,8 @@ where
     T: NdFloat,
 {
     pub fn relu(&mut self) -> VariableRef<T> {
-        let module = Relu {};
-        module.subscribe(self, self, Box::new(Relu {}))
+        let grad_fn = Relu {};
+        grad_fn.subscribe(self, self, Box::new(Relu {}))
     }
 }
 

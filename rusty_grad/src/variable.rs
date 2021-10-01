@@ -16,7 +16,7 @@ where
     pub grad: Option<Array<T, IxDyn>>,
     pub left_root: Option<VariableRef<T>>,
     pub right_root: Option<VariableRef<T>>,
-    pub module: Option<Box<dyn Module<T>>>,
+    pub grad_fn: Option<Box<dyn GradFn<T>>>,
 }
 
 // ********************** INIT **********************************
@@ -28,7 +28,7 @@ where
         data: Array<T, IxDyn>,
         left_root: Option<VariableRef<T>>,
         right_root: Option<VariableRef<T>>,
-        module: Option<Box<dyn Module<T>>>,
+        grad_fn: Option<Box<dyn GradFn<T>>>,
         retain_grad: bool,
     ) -> VariableRef<T> {
         let grad = match retain_grad {
@@ -41,7 +41,7 @@ where
             grad,
             left_root,
             right_root,
-            module,
+            grad_fn,
         };
 
         VariableRef::new(var)
@@ -50,9 +50,9 @@ where
         data: Array<T, IxDyn>,
         left_root: Option<VariableRef<T>>,
         right_root: Option<VariableRef<T>>,
-        module: Option<Box<dyn Module<T>>>,
+        grad_fn: Option<Box<dyn GradFn<T>>>,
     ) -> VariableRef<T> {
-        Variable::new_node_i(data, left_root, right_root, module, false)
+        Variable::new_node_i(data, left_root, right_root, grad_fn, false)
     }
 
     pub fn new(data: Array<T, IxDyn>) -> VariableRef<T> {
@@ -133,7 +133,7 @@ where
 
 // ****************************MODULE***********************
 
-pub trait Module<T>
+pub trait GradFn<T>
 where
     T: NdFloat,
 {
@@ -150,13 +150,13 @@ where
         &self,
         lhs: &'a VariableRef<T>,
         rhs: &'b VariableRef<T>,
-        module_box: Box<dyn Module<T>>,
+        grad_fn_box: Box<dyn GradFn<T>>,
     ) -> VariableRef<T> {
         Variable::<T>::new_node(
             self.forward(&lhs.borrow().data, &rhs.borrow().data),
             Some(lhs.clone()),
             Some(rhs.clone()),
-            Some(module_box),
+            Some(grad_fn_box),
         )
     }
 }
@@ -193,16 +193,16 @@ where
         self.get_grad().unwrap()
     }
 
-    pub fn backward_module<'a>(&mut self, grad: &Array<T, IxDyn>) -> [Array<T, IxDyn>; 2] {
+    pub fn backward_grad_fn<'a>(&mut self, grad: &Array<T, IxDyn>) -> [Array<T, IxDyn>; 2] {
         let mut grads_to_add: [Array<T, IxDyn>; 2] = [
             Array::<T, Ix1>::zeros(1).into_dyn(),
             Array::<T, Ix1>::zeros(1).into_dyn(),
         ];
 
-        match &self.module {
-            Some(module) => match (&mut self.left_root, &mut self.right_root) {
+        match &self.grad_fn {
+            Some(grad_fn) => match (&mut self.left_root, &mut self.right_root) {
                 (Some(left_ref), Some(right_ref)) => {
-                    grads_to_add = module.backward(&grad, left_ref, right_ref);
+                    grads_to_add = grad_fn.backward(&grad, left_ref, right_ref);
 
                     // call the borrow_mut in two different scopes so that when left and right left_root target the same variable it does not throw a BorrowMutError
                     {
@@ -240,7 +240,7 @@ where
     }
 
     fn backward_in(&mut self, grad: &Array<T, IxDyn>) {
-        let new_grad = self.backward_module(grad);
+        let new_grad = self.backward_grad_fn(grad);
 
         for (i, some_var) in vec![&mut self.left_root, &mut self.right_root]
             .iter_mut()

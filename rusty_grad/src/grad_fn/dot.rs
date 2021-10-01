@@ -2,12 +2,12 @@ use ndarray::{stack, ArrayView, Axis};
 use ndarray::{Array, Ix2, IxDyn, NdFloat};
 use ndarray::{Dimension, RemoveAxis, ShapeError};
 
-use crate::variable::Module;
+use crate::variable::GradFn;
 use crate::variable::VariableRef;
 
 pub struct Dot {}
 
-impl<T> Module<T> for Dot
+impl<T> GradFn<T> for Dot
 where
     T: NdFloat,
 {
@@ -61,8 +61,8 @@ where
     T: NdFloat,
 {
     pub fn dot(&mut self, other: &VariableRef<T>) -> VariableRef<T> {
-        let module = Dot {};
-        module.subscribe(self, other, Box::new(Dot {}))
+        let grad_fn = Dot {};
+        grad_fn.subscribe(self, other, Box::new(Dot {}))
     }
 }
 
