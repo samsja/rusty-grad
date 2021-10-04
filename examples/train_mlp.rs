@@ -8,17 +8,16 @@ use rusty_grad::optim::sgd::{Optim, SGD};
 use rusty_grad::variable::Variable;
 
 fn main() {
-    let dataset = MakeMoonDataset::new(50);
+    let dataset = MakeMoonDataset::new(30);
 
     let layer1 = Linear::<f32>::new(2, 16);
-    let layer2 = Linear::<f32>::new(16, 16);
-    let layer3 = Linear::<f32>::new(16, 2);
+    let layer2 = Linear::<f32>::new(16, 2);
 
     let mut mlp = MLP {
-        layers: vec![layer1, layer2, layer3],
+        layers: vec![layer1, layer2],
     };
 
-    let ref mut optim = SGD::new(mlp.params(), 0.1).unwrap();
+    let ref mut optim = SGD::new(mlp.params(), 0.3).unwrap();
 
     let period_print = 1;
 
