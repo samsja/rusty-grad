@@ -31,3 +31,24 @@ fn mlp_train() {
         optim.step();
     }
 }
+
+#[test]
+fn mlp_softmax_autograd() {
+    let data = Variable::new_no_retain_grad(array!([1.0], [1.0]).into_dyn());
+
+    let layer1 = Linear::<f32>::new(2, 10);
+    let layer2 = Linear::<f32>::new(10, 10);
+    let layer3 = Linear::<f32>::new(10, 2);
+
+    let mut mlp = MLP {
+        layers: vec![layer1, layer2, layer3],
+    };
+
+    let output = mlp.f(&data).softmax();
+
+    let target = Variable::new_no_retain_grad(array!([1.], [0.]).into_dyn());
+
+    let mut loss = mse_loss(&output, &target);
+
+    loss.backward();
+}
