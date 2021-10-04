@@ -2,7 +2,7 @@ use crate::module::Module;
 use crate::variable::{Variable, VariableRef};
 use ndarray::{Array, Ix2, NdFloat};
 
-//use rand::distributions::{Uniform};
+use rand::distributions::{Distribution, Uniform};
 
 pub struct Linear<T: NdFloat> {
     pub in_features: usize,
@@ -11,25 +11,34 @@ pub struct Linear<T: NdFloat> {
     pub bias: VariableRef<T>,
 }
 
-impl<T: NdFloat> Linear<T> {
-    pub fn new(in_features: usize, out_features: usize) -> Linear<T> {
+impl Linear<f32> {
+    pub fn new(in_features: usize, out_features: usize) -> Linear<f32> {
         Linear {
             in_features,
             out_features,
             weight: Linear::init_weight(in_features, out_features),
-            bias: Linear::init_bias(out_features),
+            bias: Linear::init_bias(in_features, out_features),
         }
     }
 
-    fn init_weight(in_features: usize, out_features: usize) -> VariableRef<T> {
-        //let bound = 1. / (in_features as f32).sqrt() ;
-        // let between = Uniform::from(-bound..bound);
-        let array_init = Array::<T, Ix2>::ones((out_features, in_features));
+    fn init_weight(in_features: usize, out_features: usize) -> VariableRef<f32> {
+        let bound = 1. / (in_features as f32).sqrt();
+        let between = Uniform::from(-bound..bound);
+        let mut rng = rand::thread_rng();
+
+        let array_init =
+            Array::<f32, Ix2>::ones((out_features, in_features)).map(|_| between.sample(&mut rng));
         Variable::new(array_init.into_dyn())
     }
 
-    fn init_bias(out_features: usize) -> VariableRef<T> {
-        Variable::new(Array::<T, Ix2>::zeros((out_features, 1)).into_dyn())
+    fn init_bias(in_features: usize, out_features: usize) -> VariableRef<f32> {
+        let bound = 1. / (in_features as f32).sqrt();
+        let between = Uniform::from(-bound..bound);
+        let mut rng = rand::thread_rng();
+
+        let array_init =
+            Array::<f32, Ix2>::ones((out_features, 1)).map(|_| between.sample(&mut rng));
+        Variable::new(array_init.into_dyn())
     }
 }
 
