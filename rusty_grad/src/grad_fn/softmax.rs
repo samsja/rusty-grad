@@ -1,17 +1,34 @@
-use ndarray::NdFloat;
+use ndarray::{Array, Dimension, NdFloat};
 
-use crate::variable::{Variable, VariableRef};
+use crate::variable::VariableRef;
+
+pub fn max<T, D>(x: &Array<T, D>) -> T
+where
+    T: NdFloat,
+    D: Dimension,
+{
+    let mut max = T::zero();
+
+    for val in x.iter() {
+        if *val > max {
+            max = *val;
+        }
+    }
+    max
+}
 
 impl<T> VariableRef<T>
 where
     T: NdFloat,
 {
     pub fn softmax(&mut self) -> VariableRef<T> {
-        let exp = self.exp();
+        let mut copy = self.identity();
+        copy.borrow_mut().data -= max(&self.borrow().data);
+        let mut exp = copy.exp();
 
-        let exp_clone = Variable::new_no_retain_grad(exp.borrow().data.clone()).sum();
+        let exp_sum = exp.sum();
 
-        exp / exp_clone
+        exp / exp_sum
     }
 }
 

@@ -46,9 +46,15 @@ fn mlp_softmax_autograd() {
 
     let output = mlp.f(&data).softmax();
 
+    println!("{}", output);
+
     let target = Variable::new_no_retain_grad(array!([1.], [0.]).into_dyn());
 
     let mut loss = mse_loss(&output, &target);
 
+    println!("{}", loss);
+
     loss.backward();
+
+    println!("{}", mlp.layers[0].weight.borrow().get_grad_f());
 }

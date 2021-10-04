@@ -2,11 +2,13 @@ use crate::module::Module;
 use crate::variable::{Variable, VariableRef};
 use ndarray::{Array, Ix2, NdFloat};
 
+//use rand::distributions::{Uniform};
+
 pub struct Linear<T: NdFloat> {
     pub in_features: usize,
     pub out_features: usize,
-    weight: VariableRef<T>,
-    bias: VariableRef<T>,
+    pub weight: VariableRef<T>,
+    pub bias: VariableRef<T>,
 }
 
 impl<T: NdFloat> Linear<T> {
@@ -20,7 +22,10 @@ impl<T: NdFloat> Linear<T> {
     }
 
     fn init_weight(in_features: usize, out_features: usize) -> VariableRef<T> {
-        Variable::new(Array::<T, Ix2>::zeros((out_features, in_features)).into_dyn())
+        //let bound = 1. / (in_features as f32).sqrt() ;
+        // let between = Uniform::from(-bound..bound);
+        let array_init = Array::<T, Ix2>::ones((out_features, in_features));
+        Variable::new(array_init.into_dyn())
     }
 
     fn init_bias(out_features: usize) -> VariableRef<T> {
@@ -55,10 +60,13 @@ impl<T: NdFloat> Module<T> for MLP<T> {
 
     fn f(&mut self, input: &VariableRef<T>) -> VariableRef<T> {
         let mut output = input.clone();
-        for lay in self.layers.iter_mut() {
-            output = lay.f(&output).relu();
+        for i in 0..(self.layers.len() - 1) {
+            output = self.layers[i].f(&output).relu();
         }
-        output
+
+        let len = self.layers.len();
+
+        self.layers[len - 1].f(&output)
     }
 }
 
